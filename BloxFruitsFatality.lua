@@ -1,7 +1,4 @@
 print('Loading Blox Fruits Fatality...')
--- local Library = loadstring(readfile('Library.lua'))()
--- local ThemeManager = loadstring(readfile('ThemeManager.lua'))()
--- local SaveManager = loadstring(readfile('SaveManager.lua'))()
 local Library = loadstring(game:HttpGet('https://raw.githubusercontent.com/FeeNiiX/BloxFruitsFatality/refs/heads/develop/libs/Linoria/Library.lua'))()
 local ThemeManager = loadstring(game:HttpGet('https://raw.githubusercontent.com/FeeNiiX/BloxFruitsFatality/refs/heads/develop/libs/Linoria/ThemeManager.lua'))()
 local SaveManager = loadstring(game:HttpGet('https://raw.githubusercontent.com/FeeNiiX/BloxFruitsFatality/refs/heads/develop/libs/Linoria/SaveManager.lua'))()
@@ -9,7 +6,7 @@ local SaveManager = loadstring(game:HttpGet('https://raw.githubusercontent.com/F
 local VirtualInputManager = game:GetService('VirtualInputManager')
 local ReplicatedStorage = game:GetService('ReplicatedStorage')
 local TeleportService = game:GetService('TeleportService')
-local TweenService = game:GetService('TweenService')
+-- local TweenService = game:GetService('TweenService')
 local VirtualUser = game:GetService('VirtualUser')
 local RunService = game:GetService('RunService')
 local StarterGui = game:GetService('StarterGui')
@@ -17,6 +14,7 @@ local Lighting = game:GetService('Lighting')
 local Players = game:GetService('Players')
 local Stats = game:GetService('Stats')
 local Player = Players.LocalPlayer
+local Timer = tick()
 
 -- TODO --
 -- Add Fast attack
@@ -24,24 +22,20 @@ local Player = Players.LocalPlayer
 -- Literally make an auto farm because thats the whole point of a blox fruits script? 😭😭😭😭😭😭
 -- Smart Teleport from hoho hub? (I already know how to 😈)
 
-local SelectedTeam = 'Pirates' -- Change your team here nigga
-
 repeat wait()
-	if Player.PlayerGui:FindFirstChild('Main (minimal)') then
-		local Main = Player.PlayerGui['Main (minimal)']
-		if Main.ChooseTeam.Visible == true then
-			if SelectedTeam == "Pirate" then
-				for i, v in pairs(getconnections(Main.ChooseTeam.Container.Pirates.Frame.TextButton.Activated)) do
-					v.Function()
-				end
-			elseif SelectedTeam == "Marine" then
-				for i, v in pairs(getconnections(Main.ChooseTeam.Container.Marines.Frame.TextButton.Activated)) do
-					v.Function()
-				end
-			else
-				for i, v in pairs(getconnections(Main.ChooseTeam.Container.Pirates.Frame.TextButton.Activated)) do
-					v.Function()
-				end
+	local Main = Player.PlayerGui:WaitForChild('Main (minimal)')
+	if Main.ChooseTeam.Visible then
+		if SelectedTeam == "Pirate" then
+			for i, v in pairs(getconnections(Main.ChooseTeam.Container.Pirates.Frame.TextButton.Activated)) do
+				v.Function()
+			end
+		elseif SelectedTeam == "Marine" then
+			for i, v in pairs(getconnections(Main.ChooseTeam.Container.Marines.Frame.TextButton.Activated)) do
+				v.Function()
+			end
+		else
+			for i, v in pairs(getconnections(Main.ChooseTeam.Container.Pirates.Frame.TextButton.Activated)) do
+				v.Function()
 			end
 		end
 	end
@@ -49,13 +43,10 @@ until Player.Team ~= nil and game:IsLoaded()
 
 -- Functions
 
-local CameraShaker = require(ReplicatedStorage.Util.CameraShaker)
-CameraShaker:Stop()
-
 Player.Idled:Connect(function()
-	print('Anti AFK saved your ass')
+	print('Anti AFK worked (i think)')
 	VirtualUser:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-	wait(1)
+	wait()
 	VirtualUser:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
 end)
 
@@ -78,38 +69,7 @@ local function GetNPCs()
 	return NPCs
 end
 
---[[ local function Tween(tar)
-	local root = Player.Character:FindFirstChild('HumanoidRootPart')
-	
-	if root and tar then
-		if tar == SelectedPlayer then
-			tar = workspace.Characters:FindFirstChild(SelectedPlayer).PrimaryPart.CFrame
-			
-		elseif tar == SelectedNPC then
-			tOffsetX, tOffsetY, tOffsetZ = 0, 0, 0
-			if workspace.NPCs:FindFirstChild(SelectedNPC) then
-				tar = workspace.NPCs:FindFirstChild(SelectedNPC).PrimaryPart.CFrame
-			else
-				tar = ReplicatedStorage.NPCs:FindFirstChild(SelectedNPC).PrimaryPart.CFrame
-			end
-			
-		elseif tar == SelectedIsland then
-			tar = workspace.Map:FindFirstChild(SelectedIsland).WorldPivot
-		end
-		local dist = (tar.Position - root.Position).Magnitude
-		
-		TweenService:Create(root, TweenInfo.new((dist - 150)/TweenSpeed, Enum.EasingStyle.Linear), {CFrame = tar + Vector3.new(offX, offY, offZ)}):Play()
-		wait(1)
-	end
-end ]]
-
--- UI Elements
 wait(2)
-
-StarterGui:SetCore('SendNotification', {
-	Title = 'Fatality Loaded Successfully',
-	Duration = '3',
-})
 
 local Window = Library:CreateWindow({
 	Title = 'fatality.win',
@@ -130,6 +90,11 @@ local Tabs = {
 	Config = Window:AddTab('Config'),
 }
 
+StarterGui:SetCore('SendNotification', {
+	Title = 'Fatality Loaded Successfully',
+	Duration = '3',
+})
+
 local MenuGroup = Tabs.Config:AddLeftGroupbox('Menu')
 
 MenuGroup:AddButton('Unload', function()
@@ -140,15 +105,15 @@ MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'LeftCon
 Library.ToggleKeybind = Options.MenuKeybind
 
 if game.PlaceId == 2753915549 then
-	First_Sea = true
+	FirstSea = true
 elseif game.PlaceId == 4442272183 then
-	Second_Sea = true
+	SecondSea = true
 elseif game.PlaceId == 7449423635 then
-	Third_Sea = true
+	ThirdSea = true
 end
 
-local IslandCheck = {
-	First_Sea_Islands = {
+if FirstSea then
+	IslandCheck = {
 		['Start Island'] = Vector3.new(1071, 16, 1426),
 		['Marine Start'] = Vector3.new(-2573, 6, 2046),
 		['Middle Town'] = Vector3.new(-655, 7, 1436),
@@ -170,96 +135,85 @@ local IslandCheck = {
 		['Shanks Room'] = Vector3.new(-1442, 29, -28),
 		['Mob Island'] = Vector3.new(-2850, 7, 5354),
 		['Dock'] = Vector3.new(82, 18, 2834)
-	},
-	Second_Sea_Islands = {
-		['Kingdom of Rose'] = Vector3.new(-394, 118, 1245),
-		['Mansion 1'] = Vector3.new(-390, 331, 673),
-		['Flamingo Room'] = Vector3.new(2302, 15, 663),
-		['Green Zone'] = Vector3.new(-2372, 72, -3166),
-		['Cafe'] = Vector3.new(-385, 73, 297),
-		['Factory'] = Vector3.new(430, 210, -432),
-		['Colosseum'] = Vector3.new(-1836, 44, 1360),
-		['Grave Island'] = Vector3.new(-5411, 48, -721),
-		['Snow Mountain'] = Vector3.new(511, 401, -5380),
-		['Cold Island'] = Vector3.new(-6026, 14, -5071),
-		['Hot Island'] = Vector3.new(-5478, 15, -5246),
-		['Cursed Ship'] = Vector3.new(902, 124, 33071),
-		['Ice Castle'] = Vector3.new(5400, 28, -6236),
-		['Forgotten Island'] = Vector3.new(-3043, 238, -10191),
-		['Usoapp Island'] = Vector3.new(4748, 8, 2849)
-	},
-	Third_Sea_Islands = {
-		['Port Town'] = Vector3.new(-610, 57, 6436),
-		['Floating Turtle'] = Vector3.new(-10919, 331, -8637),
-		['Mansion'] = Vector3.new(-12553, 332, -7621),
-		['Castle on the Sea'] = Vector3.new(-5091, 314, -2976),
-		['Hydra Island'] = Vector3.new(5229, 800, 345),
-		['Friendly Arena'] = Vector3.new(5220, 72, -1450),
-		['Haunted Castle'] = Vector3.new(-9530, -132, 5763),
-		['Great Tree'] = Vector3.new(2174, 28, -6728),
-		['Beautiful Pirate Domain'] = Vector3.new(5310, 21, 129),
-		['Secret Temple'] = Vector3.new(5217, 6, 1100),
-		['Teler Park'] = Vector3.new(-9512, 142, 5548),
-		['Peanut Island'] = Vector3.new(-2142, 48, -10031),
-		['Chocolate Island'] = Vector3.new(156, 30, -12662),
-		['Ice Cream Island'] = Vector3.new(-949, 59, -10907),
-		['Cake Loaf'] = Vector3.new(-2099, 66, -12128),
-		['Candy Cane'] = Vector3.new(-1530, 13, -14770),
-		['Mini Sky'] = Vector3.new(-263, 49325, -35260),
-		['Tiki Outpost'] = Vector3.new(-16548, 55, -172)
 	}
+elseif SecondSea then
+IslandCheck = {
+	['Kingdom of Rose'] = Vector3.new(-394, 118, 1245),
+	['Mansion 1'] = Vector3.new(-390, 331, 673),
+	['Flamingo Room'] = Vector3.new(2302, 15, 663),
+	['Green Zone'] = Vector3.new(-2372, 72, -3166),
+	['Cafe'] = Vector3.new(-385, 73, 297),
+	['Factory'] = Vector3.new(430, 210, -432),
+	['Colosseum'] = Vector3.new(-1836, 44, 1360),
+	['Grave Island'] = Vector3.new(-5411, 48, -721),
+	['Snow Mountain'] = Vector3.new(511, 401, -5380),
+	['Cold Island'] = Vector3.new(-6026, 14, -5071),
+	['Hot Island'] = Vector3.new(-5478, 15, -5246),
+	['Cursed Ship'] = Vector3.new(902, 124, 33071),
+	['Ice Castle'] = Vector3.new(5400, 28, -6236),
+	['Forgotten Island'] = Vector3.new(-3043, 238, -10191),
+	['Usoapp Island'] = Vector3.new(4748, 8, 2849)
+}
+elseif ThirdSea then
+IslandCheck = {
+	['Port Town'] = Vector3.new(-610, 57, 6436),
+	['Floating Turtle'] = Vector3.new(-10919, 331, -8637),
+	['Mansion'] = Vector3.new(-12553, 332, -7621),
+	['Castle on the Sea'] = Vector3.new(-5091, 314, -2976),
+	['Hydra Island'] = Vector3.new(5229, 800, 345),
+	['Friendly Arena'] = Vector3.new(5220, 72, -1450),
+	['Haunted Castle'] = Vector3.new(-9530, -132, 5763),
+	['Great Tree'] = Vector3.new(2174, 28, -6728),
+	['Beautiful Pirate Domain'] = Vector3.new(5310, 21, 129),
+	['Secret Temple'] = Vector3.new(5217, 6, 1100),
+	['Teler Park'] = Vector3.new(-9512, 142, 5548),
+	['Peanut Island'] = Vector3.new(-2142, 48, -10031),
+	['Chocolate Island'] = Vector3.new(156, 30, -12662),
+	['Ice Cream Island'] = Vector3.new(-949, 59, -10907),
+	['Cake Loaf'] = Vector3.new(-2099, 66, -12128),
+	['Candy Cane'] = Vector3.new(-1530, 13, -14770),
+	['Mini Sky'] = Vector3.new(-263, 49325, -35260),
+	['Tiki Outpost'] = Vector3.new(-16548, 55, -172)
 }
 
-local Islands = {}
-if First_Sea then
-	for i, v in pairs(IslandCheck.First_Sea_Islands) do
-		table.insert(Islands, i)
-	end
-elseif Second_Sea then
-	for i, v in pairs(IslandCheck.Second_Sea_Islands) do
-		table.insert(Islands, i)
-	end
-elseif Third_Sea then
-	for i, v in pairs(IslandCheck.Third_Sea_Islands) do
-		table.insert(Islands, i)
-	end
-end
+--[[ 
+TODO: Island Tweeing is uncomplete, the tween itself wont get the vector3 values so yas
+ ]]
 
 -- Left Group Box Tweening
 local Tweening = Tabs.Main:AddLeftGroupbox('Tweening')
 
-local function Tween(tar, wait, offset)
-	local root = Player.Character:FindFirstChild('HumanoidRootPart')
-	if tar.CFrame then
-		local info = TweenInfo.new(((tar.CFrame.Position - root.CFrame.Position).Magnitude - 150) / tSpeed)
-		if offset then
-			local t = TweenService:Create(root, info, {CFrame = tar.CFrame + Vector3.new(offX, offY, offZ)})
-		else
-			local t = TweenService:Create(root, info, {CFrame = tar.CFrame})
-		end
+local function getTargetPosition(target)
+	if typeof(target) == "Instance" and target:IsA("BasePart") then
+		return target.Position
+	elseif typeof(target) == "CFrame" then
+		return target.Position
+	elseif typeof(target) == "Vector3" then
+		return target
 	else
-		local info = TweenInfo.new(((tar - root.CFrame.Position).Magnitude - 150) / tSpeed)
-		if offset then
-			local t = TweenService:Create(root, info, {CFrame = tar + Vector3.new(offX, offY, offZ)})
-		else
-			local t = TweenService:Create(root, info, {CFrame = tar})
-		end
-	end
-
-	if root and info and tar then
-		if wait then
-			t:Play()
-			t.Completed:Wait()
-		else
-			t:Play()
-		end
+		print("203: Invalid target type")
 	end
 end
 
-local function cancelTween()
-	local root = Player.Character:FindFirstChild('HumanoidRootPart')
-	if root then
-		root.CFrame = root.CFrame
+local isTweening
+local function tweenToTarget(target, offset)
+	root = Player.Character:FindFirstChild('HumanoidRootPart')
+	local targetPos = getTargetPosition(target)
+	if offset then
+		targetPos = targetPos + Vector3.new(offX, offY, offZ)
+	end
+
+	local distance = (root.Position - targetPos).Magnitude
+	local duration = distance / tSpeed
+
+	local info = TweenInfo.new(duration, Enum.EasingStyle.Linear)
+	local tween = TweenService:Create(root, info, {CFrame = CFrame.new(targetPos)})
+
+	tween:Play()
+	isTweening = true
+
+	if offset then
+		root.Anchored = true
 	end
 end
 
@@ -267,7 +221,6 @@ Tweening:AddDropdown('PlayersDropdown', {SpecialType = 'Player', Text = 'Players
 Options.PlayersDropdown:OnChanged(function()
 	SelectedPlayer = Options.PlayersDropdown.Value
 end)
-
 
 Tweening:AddToggle('SpectatePlayerToggle', {Text = 'Spectate Player', Default = false, Callback = function(Value) end})
 Toggles.SpectatePlayerToggle:OnChanged(function()
@@ -278,21 +231,22 @@ Toggles.SpectatePlayerToggle:OnChanged(function()
 	end
 end)
 
-
 Tweening:AddToggle('TweenToPlayersToggle', {Text = 'Tween To Players', Default = false, Callback = function(Value) end})
-
-Toggles.TweenToPlayersToggle:OnChanged(function()
-	while Toggles.TweenToPlayersToggle.Value do
-		local tar = Players:FindFirstChild(SelectedPlayer).Character.HumanoidRootPart
-		if not tar then
-			tar = workspace.Characters:FindFirstChild(SelectedPlayer).HumanoidRootPart
-		else
-			Tween(tar, false, true)
+while wait() do
+	if Toggles.TweenToPlayersToggle.Value then
+		target = workspace.Characters:FindFirstChild(SelectedPlayer).HumanoidRootPart
+		offset = true
+		tweenToTarget(target, offset)
+	else
+		if isTweening then
+			TweenService:Create(humanoidRootPart, TweenInfo.new(0), {CFrame = humanoidRootPart.CFrame}):Play()
+			if humanoidRootPart.Anchored then
+				humanoidRootPart.Anchored = false
+			end
+			isTweening = false
 		end
-		wait(1/60)
 	end
-end)
-
+end
 
 Tweening:AddDropdown('NPCsDropdown', {Values = GetNPCs(), Default = 'Barista Cousin', Multi = false, Text = 'NPCs', Callback = function(Value) end})
 Options.NPCsDropdown:OnChanged(function()
@@ -300,45 +254,46 @@ Options.NPCsDropdown:OnChanged(function()
 end)
 
 Tweening:AddToggle('TweenToNPCToggle', {Text = 'Tween To NPC', Default = false, Callback = function(Value) end})
-
-Toggles.TweenToNPCToggle:OnChanged(function()
-	while Toggles.TweenToNPCToggle.Value do
+while wait() do
+	if Toggles.TweenToNPCToggle.Value then
 		if workspace.NPCs:FindFirstChild(SelectedNPC) then
-			tar = workspace.NPCs:FindFirstChild(SelectedNPC).PrimaryPart
-			Tween(tar, true, false)
+			target = workspace.NPCs:FindFirstChild(SelectedNPC).PrimaryPart
+			offset = false
+			tweenToTarget(target, offset)
 		else
-			tar = ReplicatedStorage.NPCs:FindFirstChild(SelectedNPC).PrimaryPart
-			Tween(tar, true, false)
+			if isTweening then
+				TweenService:Create(humanoidRootPart, TweenInfo.new(0), {CFrame = humanoidRootPart.CFrame}):Play()
+				if humanoidRootPart.Anchored then
+					humanoidRootPart.Anchored = false
+				end
+				isTweening = false
+			end
 		end
 	end
-	wait(1)
-end)
+end
 
-Tweening:AddDropdown('IslandsDropdown', {Values = Islands, Default = 0, Multi = false, Text = 'Islands', Callback = function(Value) end})
+Tweening:AddDropdown('IslandsDropdown', {Values = IslandCheck, Default = 0, Multi = false, Text = 'Islands', Callback = function(Value) end})
 Options.IslandsDropdown:OnChanged(function()
 	SelectedIsland = Options.IslandsDropdown.Value
 end)
 
-
 Tweening:AddToggle('TweenToIslandToggle', { Text = 'Tween To Island', Default = false, Callback = function(Value) end})
-Toggles.TweenToIslandToggle:OnChanged(function()
-	while wait(1) and Toggles.TweenToIslandToggle.Value and SelectedIsland do
-		Tween(SelectedIsland, true, false)
+while wait() do
+	if Toggles.TweenToIslandToggle.Value and SelectedIsland do
+		target = SelectedIsland
+		offset = false
+		tweenToTarget(target, offset)
 	end
-end)
+end
 
-
-Tweening:AddSlider('tSpeed', {Text = 'Tweening Speed', Default = 340, Min = 0, Max = 350, Rounding = 0, Compact = false,Callback = function(Value) end})
+Tweening:AddSlider('tSpeed', {Text = 'Tweening Speed', Default = 350, Min = 0, Max = 350, Rounding = 0, Compact = false,Callback = function(Value) end})
 Options.tSpeed:OnChanged(function() tSpeed = Options.tSpeed.Value end)
-
 
 Tweening:AddSlider('offX', {Text = 'Offset X', Default = 0, Min = 0, Max = 200, Rounding = 0, Compact = false, Callback = function(Value) end})
 Options.offX:OnChanged(function() offX = Options.offX.Value end)
 
-
 Tweening:AddSlider('offY', {Text = 'Offset Y', Default = 20, Min = 0, Max = 200, Rounding = 0, Compact = false, Callback = function(Value) end})
 Options.offY:OnChanged(function() offY = Options.offY.Value end)
-
 
 Tweening:AddSlider('offZ', {Text = 'Offset Z', Default = 0, Min = 0, Max = 200, Rounding = 0, Compact = false,Callback = function(Value) end})
 Options.offZ:OnChanged(function() offZ = Options.offZ.Value end)
@@ -372,15 +327,17 @@ spawn(function()
 end)
 
 local Number = math.random(1, 1000000)
+local function fDist(arg)
+	return math.floor(tonumber(arg))
+end
 
 AutoCollect:AddToggle('ChestESP', {Text = 'Chest ESP', Default = false, Callback = function(Value) end})
-
 spawn(function()
 	while wait(1) do
 		for i, v in pairs(workspace:GetChildren()) do
 			pcall(function()
 				if string.find(v.Name, "Chest") then
-					if ChestESP then
+					if Toggles.ChestESP.Value then
 						if string.find(v.Name, "Chest") then
 							if not v:FindFirstChild("NameEsp" .. Number) then
 								local ChestGui = Instance.new("BillboardGui", v)
@@ -397,18 +354,10 @@ spawn(function()
 								ChestText.TextYAlignment = "Top"
 								ChestText.BackgroundTransparency = 1;
 								ChestText.TextStrokeTransparency = 0.5;
-								ChestText.TextColor3 = Color3.fromRGB(0, 255, 250)
-								if v.Name == "Chest1" then
-									ChestText.Text = "Chest 1" .. " \n" .. fDist((Player.Character.CFrame.Position - v.Position).Magnitude) .. " Studs"
-								end;
-								if v.Name == "Chest2" then
-									ChestText.Text = "Chest 2" .. " \n" .. fDist((Player.Character.CFrame.Position - v.Position).Magnitude) .. " Studs"
-								end;
-								if v.Name == "Chest3" then
-									ChestText.Text = "Chest 3" .. " \n" .. fDist((Player.Character.CFrame.Position - v.Position).Magnitude) .. " Studs"
-								end
+								ChestText.TextColor3 = Color3.fromRGB(255, 255, 255)
+								ChestText.Text = v.Name .. " \n" .. fDist((Player.Character.CFrame.Position - v.Position).Magnitude) .. " Studs"
 							else
-								v["NameEsp" .. Number].TextLabel.Text = v.Name .. "   \n" .. fDist((Player.Character.Head.Position - v.Position).Magnitude) .. " Studs"
+								v["NameEsp" .. Number].TextLabel.Text = v.Name .. "   \n" .. fDist((Player.Character.CFrame.Position - v.Position).Magnitude) .. " Studs"
 							end
 						end
 					else
@@ -442,7 +391,7 @@ Servers:AddButton({Text = 'Server Hop', Func = function()
 	local PlaceId = game.PlaceId
 	local JobId = game.JobId
 	local HttpService = game:GetService('HttpService')
-	local HttpRequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
+	local HttpRequest = (http and http.request) or http_request or request
 	
 	if HttpRequest then
 		local servers = {}
@@ -475,6 +424,17 @@ Servers:AddButton({Text = 'Rejoin', Func = function()
 	TeleportService:TeleportToPlaceInstance(PlaceId, JobId, Player)
 end})
 
+Servers:AddSlider('AutoHopTimer', {Text = 'AutoHop Timer (Minutes)', Default = 30, Min = 1, Max = 240, Rounding = 0, Compact = false, Callback = function(Value) end})
+Servers:AddToggle('AutoHop', {Text = 'Auto Hop', Default = true, Callback = function(Value) end})
+while wait() do
+	if Toggles.AutoHop.Value then
+		if Timer >= (Options.AutoHopTimer.Value * 60) then
+			while wait(5) do
+				TeleportService:Teleport(PlaceId, Player)
+			end
+		end
+	end
+end
 
 -- Scripts Groupbox
 local Scripts = Tabs.Main:AddRightGroupbox('Scripts')
@@ -500,7 +460,7 @@ local HumanoidRootPart = Player.Character.HumanoidRootPart
 Player.CharacterAdded:Connect(function(plr)
 	local Humanoid = plr:WaitForChild('Humanoid')
 	local HumanoidRootPart = plr:WaitForChild('HumanoidRootPart')
-	print('Line 514' .. plr .. Humanoid .. HumanoidRootPart)
+	print('474', plr, Humanoid, HumanoidRootPart)
 end)
 
 LocalPlayerGroupBox:AddDropdown('Team', {Values = {'Pirates', 'Marines'}, Default = SelectedTeam, Multi = false, Text = 'Team', Callback = function(Value) end})
@@ -516,16 +476,39 @@ LocalPlayerGroupBox:AddButton({Text = 'Change Team', Func = function()
 	end
 end})
 
-LocalPlayerGroupBox:AddToggle('InfiniteEnergy', {Text = 'Unlimited Energy', Default = false, Callback = function(Value) end})
-LocalPlayerGroupBox:AddToggle('InfiniteGeppo', {Text = 'Unlimited Air Jumps', Default = false, Callback = function(Value) end})
+-- could be inside the loop but it may lag or whatever
+LocalPlayerGroupBox:AddButton({Text = 'Remove Fog', Func = function()
+	Lighting.FogStart = Lighting.FogStart * 100
+	Lighting.FogEnd = Lighting.FogEnd * 100
+
+	for i, v in pairs(Lighting:GetDescendants()) do
+		if v:IsA('Atmosphere') then
+			v:Destroy()
+		end
+	end
+end})
+
+LocalPlayerGroupBox:AddButton({Text = 'Stop Camera Shake', Func = function()
+	local CameraShaker = require(ReplicatedStorage.Util.CameraShaker)
+	CameraShaker:Stop()
+end})
+
+LocalPlayerGroupBox:AddToggle('WalkOnWater', {Text = 'Walk on Water', Default = true, Callback = function(Value) end})
+Toggles.WalkOnWater:OnChanged(function()
+	if Toggles.WalkOnWater.Value then
+		workspace.Map['WaterBase-Plane'].Size = Vector3.new(1000,112,1000)
+	else
+		workspace.Map['WaterBase-Plane'].Size = Vector3.new(1000,80,1000)
+	end
+end)
+
 LocalPlayerGroupBox:AddToggle('ChangeDashLength', {Text = 'Change Dash Length', Default = false, Callback = function(Value) end})
 LocalPlayerGroupBox:AddToggle('ChangeSpeedHack', {Text = 'Change WalkSpeed', Default = false, Callback = function(Value) end})
 LocalPlayerGroupBox:AddToggle('ChangeJumpHack', {Text = 'Change JumpPower', Default = false, Callback = function(Value) end})
 
-local DefaultDash = Player.Character:GetAttribute('DashLength')
-
+local dDash = Player.Character:GetAttribute('DashLength')
 local DashDepbox = LocalPlayerGroupBox:AddDependencyBox()
-DashDepbox:AddSlider('DashLength', {Text = 'Dash Length', Default = DefaultDash, Min = 0, Max = 500, Rounding = 0, Compact = false, Callback = function(Value) end})
+DashDepbox:AddSlider('DashLength', {Text = 'Dash Length', Default = dDash, Min = 0, Max = 500, Rounding = 0, Compact = false, Callback = function(Value) end})
 Options.DashLength:OnChanged(function()
 	Player.Character:SetAttribute('DashLength', Options.DashLength.Value)
 	Player.Character:SetAttribute('DashLengthAir', Options.DashLength.Value)
@@ -547,39 +530,49 @@ JumpDepbox:SetupDependencies({
 	{ Toggles.ChangeJumpHack, true }
 })
 
--- Initializing the default values
-local dKenRange = Player:WaitForChild('VisionRadius').Value
-local ZoomInit = Player.CameraMaxZoomDistance
-print('Line 614' .. dKenRange, ZoomInit)
-
-local originalLighting = {}
-local dFogStart = Lighting.FogStart
-local dFogEnd = Lighting.FogEnd
-for i, v in pairs(Lighting:GetDescendants()) do
-	if v:IsA('Atmosphere') then
-		table.insert(originalLighting, v:Clone())
-	end
-end
-
-LocalPlayerGroupBox:AddToggle('RemoveFlashstepCooldown', {Text = 'Remove Flashstep Cooldown', Default = true, Callback = function(Value) end})
-LocalPlayerGroupBox:AddToggle('UnlimitedVision', {Text = 'Unlimited Instinct Range', Default = true, Callback = function(Value) end})
-LocalPlayerGroupBox:AddToggle('DelKenBlur', {Text = 'Remove Instinct Blur', Default = true, Callback = function(Value) end})
-LocalPlayerGroupBox:AddToggle('AutoRaceAbility', {Text = 'Auto Race V3', Default = true, Callback = function(Value) end})
-LocalPlayerGroupBox:AddToggle('UnlimitedZoom', {Text = 'Zoom Distance', Default = true, Callback = function(Value) end})
-LocalPlayerGroupBox:AddToggle('AutoInstinct', {Text = 'Auto Instinct', Default = true, Callback = function(Value) end})
-LocalPlayerGroupBox:AddToggle('NoclipCam', {Text = 'Noclip Camera', Default = true, Callback = function(Value) end})
-LocalPlayerGroupBox:AddToggle('DeleteFog', {Text = 'Remove Fog', Default = true, Callback =  function(Value) end})
-LocalPlayerGroupBox:AddToggle('AutoAura', {Text = 'Auto Aura', Default = true, Callback = function(Value) end})
+LocalPlayerGroupBox:AddToggle('NoFlashstepCooldown', {Text = 'No Flashstep Cooldown', Default = false, Callback = function(Value) end})
+LocalPlayerGroupBox:AddToggle('InfiniteGeppo', {Text = 'Unlimited Air Jumps', Default = false, Callback = function(Value) end})
+LocalPlayerGroupBox:AddToggle('InfiniteEnergy', {Text = 'Unlimited Energy', Default = false, Callback = function(Value) end})
+LocalPlayerGroupBox:AddToggle('DelKenBlur', {Text = 'Remove Instinct Blur', Default = false, Callback = function(Value) end})
+LocalPlayerGroupBox:AddToggle('UnlimitedZoom', {Text = 'Zoom Distance', Default = false, Callback = function(Value) end})
+LocalPlayerGroupBox:AddToggle('AutoInstinct', {Text = 'Auto Instinct', Default = false, Callback = function(Value) end})
+LocalPlayerGroupBox:AddToggle('FarInstinct', {Text = 'Far Instinct', Default = false, Callback = function(Value) end})
+LocalPlayerGroupBox:AddToggle('NoclipCam', {Text = 'Noclip Camera', Default = false, Callback = function(Value) end})
+LocalPlayerGroupBox:AddToggle('AutoRaceV3', {Text = 'Auto Race V3', Default = false, Callback = function(Value) end})
+LocalPlayerGroupBox:AddToggle('AutoAura', {Text = 'Auto Aura', Default = false, Callback = function(Value) end})
 LocalPlayerGroupBox:AddToggle('Noclip', {Text = 'Noclip', Default = false, Callback = function(Value) end})
 
+local dZoom = Player.CameraMaxZoomDistance
 spawn(function() -- start of update
 	while wait(0.1) do
-		-- Auto Aura
-		if Toggles.AutoAura.Value then
-			local HasBuso = Player.Character:FindFirstChild('HasBuso')
-			if not HasBuso then
-				ReplicatedStorage.Remotes.CommF_:InvokeServer('Buso')
+		-- Flashstep Cooldown
+		if Toggles.NoFlashstepCooldown.Value then
+			Player.Character:SetAttribute('FlashstepCooldown', 1)
+		else
+			Player.Character:SetAttribute('FlashstepCooldown', 0)
+		end
+
+		-- Infinite Energy
+		if Toggles.InfiniteEnergy.Value then
+			local Energy = Player.Character:FindFirstChild('Energy')
+			Energy.Value = Energy.MaxValue
+		end
+
+		-- Remove Instinct Blur
+		if Toggles.DelKenBlur.Value then
+			Lighting.Blur.Enabled = false
+			for i, v in pairs(Lighting:GetChildren()) do
+				if v:IsA('ColorCorrectionEffect') then
+					v.Enabled = false
+				end
 			end
+		end -- ken blur restores itself
+
+		-- Unlimited Zoom
+		if Toggles.UnlimitedZoom.Value then
+			Player.CameraMaxZoomDistance = dZoom * 100
+		else
+			Player.CameraMaxZoomDistance = dZoom
 		end
 
 		-- Auto Instinct
@@ -592,26 +585,18 @@ spawn(function() -- start of update
 			end
 		end
 
+		-- Far Instinct
+		if Toggles.FarInstinct.Value then
+			Player.Character:SetAttribute('KenRange', math.huge)
+		end
+
 		-- Auto Race V3
-		if Toggles.AutoRaceAbility.Value then
+		if Toggles.AutoRaceV3.Value then
 			VirtualInputManager:SendKeyEvent(true, "T", false, game)
 			wait()
 			VirtualInputManager:SendKeyEvent(false, "T", false, game)
 		end
 
-		-- Unlimited Ken
-		if Toggles.UnlimitedVision.Value then
-			Player.VisionRadius.Value = math.huge
-		else
-			Player.VisionRadius.Value = dKenRange
-		end
-
-		-- Flashstep Cooldown
-		if Toggles.RemoveFlashstepCooldown.Value then
-			Player.Character:SetAttribute('FlashstepCooldown', 1)
-		else
-			Player.Character:SetAttribute('FlashstepCooldown', 0)
-		end
 		-- Noclip Camera
 		if Toggles.NoclipCam.Value then
 			Player.DevCameraOcclusionMode = 'Invisicam'
@@ -619,43 +604,13 @@ spawn(function() -- start of update
 			Player.DevCameraOcclusionMode = 'Zoom'
 		end
 
-		-- Unlimited Zoom
-		if Toggles.UnlimitedZoom.Value then
-			Player.CameraMaxZoomDistance = math.huge
-		else
-			Player.CameraMaxZoomDistance = ZoomInit
-		end
-
-		-- Remove Fog
-		if Toggles.DeleteFog.Value then
-			Lighting.FogStart = math.huge
-			Lighting.FogEnd = math.huge
-		
-			for i, v in pairs(Lighting:GetDescendants()) do
-				if v:IsA('Atmosphere') then
-					v:Destroy()
-				end
+		-- Auto Aura
+		if Toggles.AutoAura.Value then
+			local HasBuso = Player.Character:FindFirstChild('HasBuso')
+			if not HasBuso then
+				ReplicatedStorage.Remotes.CommF_:InvokeServer('Buso')
 			end
-		-- else -- restore fog
-		--     Lighting.FogStart = dFogStart
-		--     Lighting.FogEnd = dFogEnd
-		--     for i, v in pairs(originalLighting) do
-		--         v.Parent = Lighting
-		--     end
-		--     break -- exit the loop if toggle is disabled
-		-- end
-		-- wait()
 		end
-
-		-- Remove Instinct Blur
-		if Toggles.DelKenBlur.Value then
-			Lighting.Blur.Enabled = false
-			for i, v in pairs(Lighting:GetChildren()) do
-				if v:IsA('ColorCorrectionEffect') then
-					v.Enabled = false
-				end
-			end
-		end -- ken blur restores itself
 
 		-- Noclip
 		if Toggles.Noclip.Value then
@@ -671,7 +626,7 @@ spawn(function() -- start of update
 				end
 			end
 		end
-	end -- end of update
+	end
 
 	if Toggles.InfiniteGeppo.Value then
 		pcall(function()
@@ -685,27 +640,10 @@ spawn(function() -- start of update
 				end
 			end
 		end)
-	end
-	
-	if Toggles.InfiniteEnergy.Value then
-		local Energy = Player.Character:FindFirstChild('Energy')
-		if Energy then
-			Energy.Value = Energy.MaxValue
-		end
-	end
+	end -- end of update
 end)
 
-LocalPlayerGroupBox:AddToggle('WalkOnWater', {Text = 'Walk on Water', Default = true, Callback = function(Value) end})
-Toggles.WalkOnWater:OnChanged(function()
-	if Toggles.WalkOnWater.Value then
-		workspace.Map['WaterBase-Plane'].Size = Vector3.new(1000,112,1000)
-	else
-		workspace.Map['WaterBase-Plane'].Size = Vector3.new(1000,80,1000)
-	end
-end)
-
-
-print('got past local player tab 😰')
+print('past localplayer tab 😰')
 
 -- Auto Farm Tab
 local function CheckLevel()
@@ -1394,10 +1332,6 @@ Options.Weapon:OnChanged(function()
 end)
 
 -- local sethiddenproperty = sethiddenproperty or (function(...) return ... end)
--- v.Humanoid:ChangeState(11)
--- v.Humanoid:ChangeState(14)
--- if v.Humanoid:FindFirstChild('Animator') then
--- v.Humanoid.Animator:Destroy()
 local function fBringMob(TargetName, TargetCFrame)
 	for i, v in pairs(workspace.Enemies:GetChildren()) do
 		if v.Name == TargetName then
@@ -1405,6 +1339,11 @@ local function fBringMob(TargetName, TargetCFrame)
 				if (v.HumanoidRootPart.Position - Player.Character.HumanoidRootPart.Position).Magnitude < tonumber(BringDis) then
 					v.HumanoidRootPart.CFrame = TargetCFrame
 					v.HumanoidRootPart.Size = Vector3.new(60, 60, 60)
+					v.Humanoid:ChangeState(11)
+					v.Humanoid:ChangeState(14)
+					if v.Humanoid:FindFirstChild('Animator') then
+						v.Humanoid.Animator:Destroy()
+					end
 				end
 			end
 		end
@@ -1414,17 +1353,17 @@ end
 AutoFarmSettings:AddToggle('BringMobs', {Text = 'Bring Mobs', Default = false, Callback = function(Value) end})
 spawn(function()
 	while wait(1) do
-		if Toggles.BringMobs.Value and (LevelFarmQuest or LevelFarmNoQuest) then
+		if Toggles.BringMobs.Value and (Toggles.AutoFarmToggle.Value) then
 			pcall(function()
 				fBringMob(Level_Farm_Name, Level_Farm_CFrame)
 			end)
 
-		elseif Toggles.BringMobs.Value and Farm_Bone then
+		elseif Toggles.BringMobs.Value and Toggles.BonesFarmToggle.Value then
 			pcall(function()
 				fBringMob(Bone_Farm_Name, Bone_Farm_CFrame)
 			end)
 
-		elseif Toggles.BringMobs.Value and Nearest_Farm then
+		elseif Toggles.BringMobs.Value and AutoFarmNearestToggle then
 			pcall(function()
 				fBringMob(Nearest_Farm_Name, Nearest_Farm_CFrame)
 			end)
@@ -1444,47 +1383,44 @@ end
 local function AutoClick()
 	print('Autoclicking (hell nah)')
 	VirtualInputManager:Button1Down(Vector2.new(0, 0))
+	wait()
+	VirtualInputManager:Button1Up(Vector2.new(0, 0))
 end
 
 local AutoFarm = Tabs.AutoFarm:AddLeftGroupbox('Auto Farm')
 AutoFarm:AddToggle('AutoFarmToggle', {Text = 'Auto Farm', Default = false, Callback = function(Value) end})
 spawn(function()
-	while wait(1) do
-		print('AutoFarm Step 1')
+	while wait(0.2) do
 		if Toggles.AutoFarmToggle.Value then
-			print('AutoFarm Step 2')
 			pcall(function()
-				print('AutoFarm Step 3')
 				CheckLevel()
 				if not string.find(Player.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text, NameMon) or Player.PlayerGui.Main.Quest.Visible == false then
-					print('AutoFarm Step 4')
 					ReplicatedStorage.Remotes.CommF_:InvokeServer("AbandonQuest")
-					Tween(CFrameQuest)
+					tweenToTarget(CFrameQuest)
 					if (CFrameQuest.Position - Player.Character.HumanoidRootPart.Position).Magnitude <= 5 then
-						wait(1)
+						wait(0.5)
 						ReplicatedStorage.Remotes.CommF_:InvokeServer("StartQuest", NameQuest, QuestLv)
 					end
-
 				elseif string.find(Player.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text, NameMon) or Player.PlayerGui.Main.Quest.Visible == true then
 					if workspace.Enemies:FindFirstChild(EnemyName) then
-						for i,v in pairs(workspace.Enemies:GetChildren()) do
+						for i, v in pairs(workspace.Enemies:GetChildren()) do
 							if v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") and v.Humanoid.Health > 0 then
 								if v.Name == EnemyName then
 									repeat wait()
 										EquipTool(SelectWeapon)
-										Tween(v.HumanoidRootPart.CFrame)
+										tweenToTarget(v.HumanoidRootPart.CFrame)
 										v.HumanoidRootPart.CanCollide = false
 										v.HumanoidRootPart.Size = Vector3.new(60,60,60)
 										-- v.HumanoidRootPart.Transparency = 1
 										Level_Farm_Name = v.Name
 										Level_Farm_CFrame = v.HumanoidRootPart.CFrame
 										AutoClick()
-									until not LevelFarmQuest or not v.Parent or v.Humanoid.Health <= 0 or not workspace.Enemies:FindFirstChild(v.Name) or Player.PlayerGui.Main.Quest.Visible == false
+									until not Toggles.AutoFarmToggle.Value or not v.Parent or v.Humanoid.Health <= 0 or not workspace.Enemies:FindFirstChild(v.Name) or Player.PlayerGui.Main.Quest.Visible == false
 								end
 							end
 						end
 					else
-						Tween(CFrameMonster)
+						tweenToTarget(CFrameMonster)
 					end
 				end
 			end)
@@ -1494,7 +1430,7 @@ end)
 
 AutoFarm:AddToggle('AutoFarmNearestToggle', {Text = 'Auto Farm Nearest', Default = false, Callback = function(Value) end})
 spawn(function()
-	while wait(1) do
+	while wait(0.1) do
 		if Toggles.AutoFarmNearestToggle.Value then
 			pcall(function()
 				for i,v in pairs (workspace.Enemies:GetChildren()) do
@@ -1502,11 +1438,11 @@ spawn(function()
 						if (Player.Character.HumanoidRootPart.Position - v.HumanoidRootPart.Position).Magnitude <= 1000 then
 							repeat wait()
 								EquipTool(SelectedWeapon)
-								Tween(v.HumanoidRootPart.CFrame)
+								tweenToTarget(v.HumanoidRootPart.CFrame)
 								Nearest_Farm_Name = v.Name
 								Nearest_Farm_CFrame = v.HumanoidRootPart.CFrame
 								AutoClick()
-							until not Nearest_Farm or not v.Parent or v.Humanoid.Health <= 0 or not workspace.Enemies:FindFirstChild(v.Name)
+							until not Toggles.AutoFarmNearestToggle.Value or not v.Parent or v.Humanoid.Health <= 0 or not workspace.Enemies:FindFirstChild(v.Name)
 						end
 					end
 				end
@@ -1515,38 +1451,36 @@ spawn(function()
 	end
 end)
 
-AutoFarm:AddToggle('BonesFarm', {Text = 'Auto Farm Bones', Default = false, Callback = function(Value) end})
+AutoFarm:AddToggle('BonesFarmToggle', {Text = 'Auto Farm Bones', Default = false, Callback = function(Value) end})
 spawn(function()
-	while wait(1) do
-		if Toggles.BonesFarm.Value then
+	while wait(0.1) do
+		if Toggles.BonesFarmToggle.Value then
 			pcall(function()
-				Tween(CFrame.new(-9508, 142, 5737))
+				tweenToTarget(CFrame.new(-9508, 142, 5737))
 				for i, v in pairs(game.Workspace.Enemies:GetChildren()) do
 					if v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") and v.Humanoid.Health > 0 then
 						if v.Name == "Reborn Skeleton" or v.Name == "Living Zombie" or v.Name =="Demonic Soul" or v.Name == "Posessed Mummy" then
 							repeat game:GetService("RunService").Heartbeat:wait()
 								EquipTool(SelectWeapon)
-								Tween(v.HumanoidRootPart.CFrame)
-								v.HumanoidRootPart.CanCollide = false
+								tweenToTarget(v.HumanoidRootPart.CFrame, true)
 								v.HumanoidRootPart.Size = Vector3.new(60,60,60)
-								--v.HumanoidRootPart.Transparency = 1
 								Bone_Farm_Name = v.Name
 								Bone_Farm_CFrame = v.HumanoidRootPart.CFrame
 								AutoClick()
-							until not Farm_Bone or not v.Parent or v.Humanoid.Health <= 0 or not game.Workspace.Enemies:FindFirstChild(v.Name)
+							until not Toggles.BonesFarmToggle.Value or not v.Parent or v.Humanoid.Health <= 0 or not game.Workspace.Enemies:FindFirstChild(v.Name)
 						end
 					end
 				end
 
 				for i, v in pairs(game:GetService("ReplicatedStorage"):GetChildren()) do
 					if v.Name == "Reborn Skeleton" then
-						Tween(v.HumanoidRootPart.CFrame)
+						tweenToTarget(v.HumanoidRootPart.CFrame, true)
 					elseif v.Name == "Living Zombie" then
-						Tween(v.HumanoidRootPart.CFrame)
+						tweenToTarget(v.HumanoidRootPart.CFrame, true)
 					elseif v.Name == "Demonic Soul" then
-						Tween(v.HumanoidRootPart.CFrame)
+						tweenToTarget(v.HumanoidRootPart.CFrame, true)
 					elseif v.Name == "Posessed Mummy" then
-						Tween(v.HumanoidRootPart.CFrame)
+						tweenToTarget(v.HumanoidRootPart.CFrame, true)
 					end
 				end
 			end)
@@ -1558,9 +1492,6 @@ end)
 local Fruits = Tabs.Fruits:AddLeftGroupbox('Fruits')
 
 Fruits:AddToggle('FruitESP', {Text = 'Fruit ESP', Default = true, Callback = function(Value) end})
-local function fDist(arg)
-	return math.floor(tonumber(arg))
-end
 local function BloxFruitsESP()
 	for i, v in pairs(workspace:GetChildren()) do
 		pcall(function()
@@ -1643,7 +1574,7 @@ spawn(function()
 	while wait(1) do
 		if Toggles.FruitNotify.Value then
 			for _, v in workspace:GetChildren() do
-				print('line 1654', v)
+				print('1654:', v)
 				if v.Name:find('Fruit') and v:IsA('Tool') then
 					StarterGui:SetCore('SendNotification', {
 						Title = 'Dropped Fruit Found: ' .. v.Name,
@@ -1741,7 +1672,7 @@ Shop:AddToggle('RandomSurprise', {Text = 'Auto Random Surprise (50 Bones)', Defa
 Toggles.RandomSurprise:OnChanged(function()
 	while Toggles.RandomSurprise.Value do
 		ReplicatedStorage.Remotes.CommF_:InvokeServer('Bones', 'Buy', 1, 1)
-		wait(0.25)
+		wait(0.2)
 	end
 end)
 
@@ -2210,7 +2141,6 @@ ESPMisc:AddButton('Unload ESP', function()
 	Sense.Unload()
 end)
 
-print('90%')
 -- Library functions
 Library:SetWatermarkVisibility(true)
 
@@ -2265,5 +2195,3 @@ ThemeManager:ApplyTheme('Fatality')
 SaveManager:LoadAutoloadConfig()
 
 Sense.Load()
-
-print('100%')
