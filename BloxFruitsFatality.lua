@@ -1,26 +1,30 @@
 print('Loading Blox Fruits Fatality...')
-local Library = loadstring(game:HttpGet('https://raw.githubusercontent.com/FeeNiiX/BloxFruitsFatality/refs/heads/develop/libs/Linoria/Library.lua'))()
-local ThemeManager = loadstring(game:HttpGet('https://raw.githubusercontent.com/FeeNiiX/BloxFruitsFatality/refs/heads/develop/libs/Linoria/ThemeManager.lua'))()
-local SaveManager = loadstring(game:HttpGet('https://raw.githubusercontent.com/FeeNiiX/BloxFruitsFatality/refs/heads/develop/libs/Linoria/SaveManager.lua'))()
+local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
+local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
+local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
+local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 
 local VirtualInputManager = game:GetService('VirtualInputManager')
+local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService('ReplicatedStorage')
 local TeleportService = game:GetService('TeleportService')
--- local TweenService = game:GetService('TweenService')
+local TweenService = game:GetService('TweenService')
+local HttpService = game:GetService('HttpService')
 local VirtualUser = game:GetService('VirtualUser')
 local RunService = game:GetService('RunService')
 local StarterGui = game:GetService('StarterGui')
 local Lighting = game:GetService('Lighting')
 local Players = game:GetService('Players')
 local Stats = game:GetService('Stats')
-local Player = Players.LocalPlayer
 local Timer = tick()
+
+local Player = Players.LocalPlayer
+local CommF_ = ReplicatedStorage.Remotes.CommF_
 
 -- TODO --
 -- Add Fast attack
 -- Add Hitbox Expander (maybe its just humanoidrootpart butt lift)
--- Literally make an auto farm because thats the whole point of a blox fruits script? 😭😭😭😭😭😭
--- Smart Teleport from hoho hub? (I already know how to 😈)
+-- Smart Teleport (I already know how to 😈)
 
 repeat wait()
 	local Main = Player.PlayerGui:WaitForChild('Main (minimal)')
@@ -42,6 +46,36 @@ repeat wait()
 until Player.Team ~= nil and game:IsLoaded()
 
 -- Functions
+
+local function getRoot()
+	local rootPart = Player:FindFirstChild('HumanoidRootPart')
+	return rootPart
+end
+
+local function ServerHop()
+	-- infinite yield server hop ofc
+	local servers = {}
+	local req = game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true")
+	local body = HttpService:JSONDecode(req)
+
+	if body and body.data then
+		for i, v in next, body.data do
+			if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) and v.playing < v.maxPlayers and v.id ~= game.JobId then
+				table.insert(servers, 1, v.id)
+			end
+		end
+	end
+
+	if #servers > 0 then
+		TeleportService:TeleportToPlaceInstance(PlaceId, servers[math.random(1, #servers)], plr)
+	else
+		StarterGui:SetCore('SendNotification', {
+			Title = 'Server Hop',
+			Text = 'Could not find a server to join.',
+			Duration = 5,
+		})
+	end
+end
 
 Player.Idled:Connect(function()
 	print('Anti AFK worked (i think)')
@@ -195,9 +229,8 @@ local function getTargetPosition(target)
 	end
 end
 
-local isTweening
 local function tweenToTarget(target, offset)
-	root = Player.Character:FindFirstChild('HumanoidRootPart')
+	root = getRoot()
 	local targetPos = getTargetPosition(target)
 	if offset then
 		targetPos = targetPos + Vector3.new(offX, offY, offZ)
@@ -217,72 +250,62 @@ local function tweenToTarget(target, offset)
 	end
 end
 
-Tweening:AddDropdown('PlayersDropdown', {SpecialType = 'Player', Text = 'Players', Callback = function(Value) end})
-Options.PlayersDropdown:OnChanged(function()
-	SelectedPlayer = Options.PlayersDropdown.Value
-end)
+local function CancelTween()
+	root = getRoot()
+	if isTweening then
+		TweenService:Create(root, TweenInfo.new(0), {CFrame = root.CFrame}):Play()
+		if root.Anchored then
+			root.Anchored = false
+		end
+		isTweening = false
+	end
+end
 
+Tweening:AddDropdown('PlayersDropdown', {SpecialType = 'Player', Text = 'Players', Callback = function(Value) end})
 Tweening:AddToggle('SpectatePlayerToggle', {Text = 'Spectate Player', Default = false, Callback = function(Value) end})
 Toggles.SpectatePlayerToggle:OnChanged(function()
 	if Toggles.SpectatePlayerToggle.Value then
 		workspace.CurrentCamera.CameraSubject = workspace.Characters[SelectedPlayer]
 	else
-		workspace.CurrentCamera.CameraSubject = Player.Character
+		workspace.CurrentCamera.CameraSubject = root.Parent
 	end
 end)
 
 Tweening:AddToggle('TweenToPlayersToggle', {Text = 'Tween To Players', Default = false, Callback = function(Value) end})
-while wait() do
+while wait(0.5) do
 	if Toggles.TweenToPlayersToggle.Value then
+		SelectedPlayer = Options.PlayersDropdown.Value
 		target = workspace.Characters:FindFirstChild(SelectedPlayer).HumanoidRootPart
-		offset = true
-		tweenToTarget(target, offset)
+		tweenToTarget(target, true)
 	else
-		if isTweening then
-			TweenService:Create(humanoidRootPart, TweenInfo.new(0), {CFrame = humanoidRootPart.CFrame}):Play()
-			if humanoidRootPart.Anchored then
-				humanoidRootPart.Anchored = false
-			end
-			isTweening = false
-		end
+		CancelTween()
 	end
 end
 
 Tweening:AddDropdown('NPCsDropdown', {Values = GetNPCs(), Default = 'Barista Cousin', Multi = false, Text = 'NPCs', Callback = function(Value) end})
-Options.NPCsDropdown:OnChanged(function()
-	SelectedNPC = Options.NPCsDropdown.Value
-end)
-
 Tweening:AddToggle('TweenToNPCToggle', {Text = 'Tween To NPC', Default = false, Callback = function(Value) end})
-while wait() do
+while wait(0.5) do
 	if Toggles.TweenToNPCToggle.Value then
 		if workspace.NPCs:FindFirstChild(SelectedNPC) then
+			SelectedNPC = Options.NPCsDropdown.Value
 			target = workspace.NPCs:FindFirstChild(SelectedNPC).PrimaryPart
-			offset = false
-			tweenToTarget(target, offset)
+			tweenToTarget(target, false)
 		else
-			if isTweening then
-				TweenService:Create(humanoidRootPart, TweenInfo.new(0), {CFrame = humanoidRootPart.CFrame}):Play()
-				if humanoidRootPart.Anchored then
-					humanoidRootPart.Anchored = false
-				end
-				isTweening = false
-			end
+			CancelTween()
 		end
 	end
 end
 
 Tweening:AddDropdown('IslandsDropdown', {Values = IslandCheck, Default = 0, Multi = false, Text = 'Islands', Callback = function(Value) end})
-Options.IslandsDropdown:OnChanged(function()
-	SelectedIsland = Options.IslandsDropdown.Value
-end)
-
 Tweening:AddToggle('TweenToIslandToggle', { Text = 'Tween To Island', Default = false, Callback = function(Value) end})
-while wait() do
-	if Toggles.TweenToIslandToggle.Value and SelectedIsland do
-		target = SelectedIsland
-		offset = false
-		tweenToTarget(target, offset)
+while wait(0.5) do
+	if Toggles.TweenToIslandToggle.Value then
+		SelectedIsland = Options.IslandsDropdown.Value
+		target = IslandCheck[SelectedIsland]
+		print("279: ", SelectedIsland, target)
+		tweenToTarget(target, false)
+	else
+		CancelTween()
 	end
 end
 
@@ -302,27 +325,23 @@ Options.offZ:OnChanged(function() offZ = Options.offZ.Value end)
 local AutoCollect = Tabs.Main:AddLeftGroupbox('Auto Collect')
 
 AutoCollect:AddToggle('AutoChests', {Text = 'Auto Collect Chests', Default = false, Callback = function(Value) end})
-
 spawn(function()
-	while Toggles.AutoChests.Value do
-		local root = Player.Character:FindFirstChild('HumanoidRootPart')
-		local info = TweenInfo(((Chest.Position - root.Position).Magnitude - 150) / tSpeed)
-		
-		for i, v in pairs(workspace.ChestModels:GetChildren()) do
-			if v.Name:find('Chest') and v:IsA('Model') then
-				Chest = v.PrimaryPart.CFrame
+	while wait() do
+		if Toggles.AutoChests.Value then
+			local root = getRoot()
+			
+			for i, v in pairs(workspace.Map:GetDescendants()) do
+				if v.Name:find('Chest') and v:IsA('Part') and v.CanTouch then
+					Chest = v.CFrame
+				end
 			end
+			
+			local dist = (Chest.Position - root.Position).Magnitude
+			local info = TweenInfo.new(dist / tSpeed)
+			local t = TweenService:Create(root, info, {CFrame = Chest})
+			t:Play()
+			t.Completed:Wait()
 		end
-		
-		for i, v in pairs(workspace.Map:GetDescendants()) do
-			if v.Name:find('Chest') and v:IsA('Part') and v.CanTouch then
-				Chest = v.CFrame
-			end
-		end
-		
-		local t = TweenService:Create(root, info, {CFrame = Chest})
-		t:Play()
-		t.Completed:Wait()
 	end
 end)
 
@@ -334,10 +353,10 @@ end
 AutoCollect:AddToggle('ChestESP', {Text = 'Chest ESP', Default = false, Callback = function(Value) end})
 spawn(function()
 	while wait(1) do
-		for i, v in pairs(workspace:GetChildren()) do
-			pcall(function()
-				if string.find(v.Name, "Chest") then
-					if Toggles.ChestESP.Value then
+		if Toggles.ChestESP.Value then
+			for i, v in pairs(workspace:GetChildren()) do
+				pcall(function()
+					if string.find(v.Name, "Chest") then
 						if string.find(v.Name, "Chest") then
 							if not v:FindFirstChild("NameEsp" .. Number) then
 								local ChestGui = Instance.new("BillboardGui", v)
@@ -371,57 +390,111 @@ spawn(function()
 	end
 end)
 
+AutoCollect:AddToggle('BerryHop', {Text = 'Berry Hop', Default = false, Callback = function(Value) end})
+AutoCollect:AddToggle('AutoCollectBerries', {Text = 'Auto Collect Berries', Default = false, Callback = function(Value) end})
+spawn(function()
+	while wait() do
+		if Toggles.AutoCollectBerries.Value then
+			local BerryBushes = CollectionService:GetTagged("BerryBush")
+			local Distance, NearestBush, NearestBerryName
+
+			for _, Bush in ipairs(BerryBushes) do
+				for AttributeName, _ in pairs(Bush:GetAttributes()) do
+					local Magnitude = (Bush.Parent:GetPivot().Position - Position).Magnitude
+					if Magnitude < Distance then
+						Distance = Magnitude
+						NearestBush = Bush
+						NearestBerryName = AttributeName
+					end
+				end
+			end
+
+			if NearestBush and NearestBerryName then
+				local BushModel = NearestBush.Parent
+				local BushCenter = BushModel:GetPivot().Position
+
+				tweenToTarget(BushCenter, false)
+
+				local BerryPart = BushModel:FindFirstChild(NearestBerryName)
+				if BerryPart and BerryPart:IsA("BasePart") then
+					tweenToTarget(BerryPart.Position, false)
+
+					VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, true, game)
+					wait(1)
+					VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+				end
+			else
+				if Toggles.BerryHop.Value then
+					ServerHop()
+				end
+			end
+		end
+	end
+end)
+
+AutoCollect:AddToggle('BerryESP', {Text = 'Berries ESP', Default = false, Callback = function(Value) end})
+spawn(function()
+	while wait() do
+		if Toggles.BerryESP.Value then
+		local BerryBushes = CollectionService:GetTagged("BerryBush")
+		for _, Bush in pairs(BerryBushes) do
+			pcall(function()
+				for AttributeName, Berry in pairs(Bush:GetAttributes()) do
+					if Berry then
+						if not Bush.Parent:FindFirstChild("BerryESP") then
+							local bill = Instance.new("BillboardGui", Bush.Parent)
+							bill.Name = "BerryESP"
+							bill.ExtentsOffset = Vector3.new(0, 2, 0)
+							bill.Size = UDim2.new(1, 200, 1, 30)
+							bill.Adornee = Bush.Parent
+							bill.AlwaysOnTop = true
+							local name = Instance.new("TextLabel", bill)
+							name.Font = Enum.Font.GothamSemibold
+							name.TextSize = 14
+							name.TextWrapped = true
+							name.Size = UDim2.new(1, 0, 1, 0)
+							name.TextYAlignment = Enum.TextYAlignment.Top
+							name.BackgroundTransparency = 1
+							name.TextStrokeTransparency = 0.5
+							name.TextColor3 = Color3.fromRGB(255, 255, 0)
+							name.Text = Berry 
+						end
+						if Bush.Parent:FindFirstChild("BerryESP") then
+							local Player = game.Players.LocalPlayer
+							if Player and Player.Character and Player.Character:FindFirstChild("Head") then
+								local Position = Player.Character.Head.Position
+								local Magnitude = (Bush.Parent:GetPivot().Position - Position).Magnitude
+								Bush.Parent.BerryESP.TextLabel.Text = Berry .. "\n" .. math.floor(Magnitude) .. "m"
+							end
+						end
+					else
+						if Bush.Parent:FindFirstChild("NameEsp") then
+							Bush.Parent:FindFirstChild("NameEsp"):Destroy()
+						end
+					end
+				end
+			end)
+		end
+	end
+end)
+
 -- Servers GroupBox
 local Servers = Tabs.Main:AddRightGroupbox('Servers')
 
 Servers:AddButton({Text = 'Travel to First Sea', Func = function()
-	ReplicatedStorage.Remotes.CommF_:InvokeServer('TravelMain')
+	CommF_:InvokeServer('TravelMain')
 end})
-
 Servers:AddButton({Text = 'Travel to Second Sea', Func = function()
-	ReplicatedStorage.Remotes.CommF_:InvokeServer('TravelDressrosa')
+	CommF_:InvokeServer('TravelDressrosa')
 end})
-
 Servers:AddButton({Text = 'Travel to Third Sea', Func = function()
-	ReplicatedStorage.Remotes.CommF_:InvokeServer('TravelZou')
+	CommF_:InvokeServer('TravelZou')
 end})
 
-Servers:AddButton({Text = 'Server Hop', Func = function()
-	-- infinite yield server hop ofc
-	local PlaceId = game.PlaceId
-	local JobId = game.JobId
-	local HttpService = game:GetService('HttpService')
-	local HttpRequest = (http and http.request) or http_request or request
-	
-	if HttpRequest then
-		local servers = {}
-		local req = HttpRequest({Url = string.format('https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true', PlaceId)})
-		local body = HttpService:JSONDecode(req.Body)
-		
-		if body and body.data then
-			for i, v in next, body.data do
-				if type(v) == 'table' and tonumber(v.playing) and tonumber(v.maxPlayers) and v.playing < v.maxPlayers and v.id ~= JobId then
-					table.insert(servers, 1, v.id)
-				end
-			end
-		end
-		
-		if #servers > 0 then
-			TeleportService:TeleportToPlaceInstance(PlaceId, servers[math.random(1, #servers)], Player)
-		else
-			StarterGui:SetCore('SendNotification', {
-				Title = 'Server Hop',
-				Text = 'Could not find a server to join.',
-				Duration = 5,
-			})
-		end
-	end
-end})
+Servers:AddButton({Text = 'Server Hop', Func = function() ServerHop() end})
 
 Servers:AddButton({Text = 'Rejoin', Func = function()
-	local PlaceId = game.PlaceId
-	local JobId = game.JobId
-	TeleportService:TeleportToPlaceInstance(PlaceId, JobId, Player)
+	TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, Player)
 end})
 
 Servers:AddSlider('AutoHopTimer', {Text = 'AutoHop Timer (Minutes)', Default = 30, Min = 1, Max = 240, Rounding = 0, Compact = false, Callback = function(Value) end})
@@ -429,8 +502,22 @@ Servers:AddToggle('AutoHop', {Text = 'Auto Hop', Default = true, Callback = func
 while wait() do
 	if Toggles.AutoHop.Value then
 		if Timer >= (Options.AutoHopTimer.Value * 60) then
-			while wait(5) do
-				TeleportService:Teleport(PlaceId, Player)
+			while wait(3) do
+				local servers = {}
+				local req = game:HttpGet("https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true")
+				local body = HttpService:JSONDecode(req)
+
+				if body and body.data then
+					for i, v in next, body.data do
+						if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) and v.playing < v.maxPlayers and v.id ~= JobId then
+							table.insert(servers, 1, v.id)
+						end
+					end
+				end
+
+				if #servers > 0 then
+					TeleportService:TeleportToPlaceInstance(PlaceId, servers[math.random(1, #servers)], plr)
+				end
 			end
 		end
 	end
@@ -470,9 +557,9 @@ end)
 
 LocalPlayerGroupBox:AddButton({Text = 'Change Team', Func = function()
 	if SelectedTeam == 'Pirates' then
-		ReplicatedStorage.Remotes.CommF_:InvokeServer('SetTeam', 'Pirates')
+		CommF_:InvokeServer('SetTeam', 'Pirates')
 	elseif SelectedTeam == 'Marines' then
-		ReplicatedStorage.Remotes.CommF_:InvokeServer('SetTeam', 'Marines')
+		CommF_:InvokeServer('SetTeam', 'Marines')
 	end
 end})
 
@@ -608,7 +695,7 @@ spawn(function() -- start of update
 		if Toggles.AutoAura.Value then
 			local HasBuso = Player.Character:FindFirstChild('HasBuso')
 			if not HasBuso then
-				ReplicatedStorage.Remotes.CommF_:InvokeServer('Buso')
+				CommF_:InvokeServer('Buso')
 			end
 		end
 
@@ -1357,12 +1444,10 @@ spawn(function()
 			pcall(function()
 				fBringMob(Level_Farm_Name, Level_Farm_CFrame)
 			end)
-
-		elseif Toggles.BringMobs.Value and Toggles.BonesFarmToggle.Value then
+		elseif Toggles.BringMobs.Value and Toggles.AutoBones.Value then
 			pcall(function()
 				fBringMob(Bone_Farm_Name, Bone_Farm_CFrame)
 			end)
-
 		elseif Toggles.BringMobs.Value and AutoFarmNearestToggle then
 			pcall(function()
 				fBringMob(Nearest_Farm_Name, Nearest_Farm_CFrame)
@@ -1395,11 +1480,11 @@ spawn(function()
 			pcall(function()
 				CheckLevel()
 				if not string.find(Player.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text, NameMon) or Player.PlayerGui.Main.Quest.Visible == false then
-					ReplicatedStorage.Remotes.CommF_:InvokeServer("AbandonQuest")
+					CommF_:InvokeServer("AbandonQuest")
 					tweenToTarget(CFrameQuest)
 					if (CFrameQuest.Position - Player.Character.HumanoidRootPart.Position).Magnitude <= 5 then
 						wait(0.5)
-						ReplicatedStorage.Remotes.CommF_:InvokeServer("StartQuest", NameQuest, QuestLv)
+						CommF_:InvokeServer("StartQuest", NameQuest, QuestLv)
 					end
 				elseif string.find(Player.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text, NameMon) or Player.PlayerGui.Main.Quest.Visible == true then
 					if workspace.Enemies:FindFirstChild(EnemyName) then
@@ -1451,10 +1536,10 @@ spawn(function()
 	end
 end)
 
-AutoFarm:AddToggle('BonesFarmToggle', {Text = 'Auto Farm Bones', Default = false, Callback = function(Value) end})
+GroupbBox_ThirdSea:AddToggle('AutoBones', {Text = 'Auto Farm Bones', Default = false, Callback = function(Value) end})
 spawn(function()
 	while wait(0.1) do
-		if Toggles.BonesFarmToggle.Value then
+		if Toggles.AutoBones.Value then
 			pcall(function()
 				tweenToTarget(CFrame.new(-9508, 142, 5737))
 				for i, v in pairs(game.Workspace.Enemies:GetChildren()) do
@@ -1467,7 +1552,7 @@ spawn(function()
 								Bone_Farm_Name = v.Name
 								Bone_Farm_CFrame = v.HumanoidRootPart.CFrame
 								AutoClick()
-							until not Toggles.BonesFarmToggle.Value or not v.Parent or v.Humanoid.Health <= 0 or not game.Workspace.Enemies:FindFirstChild(v.Name)
+							until not Toggles.AutoBones.Value or not v.Parent or v.Humanoid.Health <= 0 or not game.Workspace.Enemies:FindFirstChild(v.Name)
 						end
 					end
 				end
@@ -1488,14 +1573,87 @@ spawn(function()
 	end
 end)
 
+local GroupBox_FirstSea = Tabs.AutoFarm:AddLeftGroupbox('First Sea')
+
+local GroupBox_SecondSea = Tabs.AutoFarm:AddLeftGroupbox('Second Sea')
+GroupBox_SecondSea:AddToggle('AutoLegendarySword', {Text = 'Auto Legendary Sword', Default = false, Callback = function(Value) end})
+spawn(function()
+    while wait() do
+        if Toggles.AutoLegendarySword.Value then
+			CommF_:InvokeServer("LegendarySworldDealer","1")
+			CommF_:InvokeServer("LegendarySworldDealer","2")
+			CommF_:InvokeServer("LegendarySworldDealer","3")
+        end
+    end
+end)
+
+GroupBox_SecondSea:AddToggle('AutoFactory', {Text = 'Auto Factory', Default = false, Callback = function(Value) end})
+spawn(function()
+	while wait() do
+		if Toggles.AutoFactory.Value then
+			if workspace.Enemies:FindFirstChild("Core") then
+				for i, v in pairs(game.Workspace.Enemies:GetChildren()) do
+					if v.Name == "Core" and v.Humanoid.Health > 0 then
+						repeat wait()
+							tweenToTarget(CFrame.new(448.46756, 199.356781, -441.389252))
+							EquipTool(SelectWeapon)
+							AutoClick()
+						until not v.Parent or v.Humanoid.Health <= 0  or Toggles.AutoFactory.Value == false
+					end
+				end
+			elseif ReplicatedStorage:FindFirstChild("Core") then
+				repeat tweenToTarget(CFrame.new(448.46756, 199.356781, -441.389252))
+					wait()
+				until not Toggles.AutoFactory.Value or (game.Players.LocalPlayer.Character.HumanoidRootPart.Position-Vector3.new(448.46756, 199.356781, -441.389252)).Magnitude <= 10
+			end
+		end
+	end
+end)
+
+local GroupbBox_ThirdSea = Tabs.AutoFarm:AddLeftGroupbox('Third Sea')
+GroupBox_SecondSea:AddToggle('AutoPirateRaid', {Text = 'Auto Pirate Raid', Default = false, Callback = function(Value) end})
+spawn(function()
+	while wait() do
+		if Toggles.AutoPirateRaid.Value then
+			pcall(function()
+				local CFrameCastleRaid = CFrame.new(-5496, 313, -2841)
+				if CFrameCastleRaid.Position - Player.Character.HumanoidRootPart.Position).Magnitude <= 500 then
+					for i, v in pairs(game:GetService("Workspace").Enemies:GetChildren()) do
+						if v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+							if v.Name then
+								if (v.HumanoidRootPart.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude < 2000 then
+									repeat wait()
+										EquipTool(SelectWeapon)
+										tweenToTarget(v.HumanoidRootPart, true)
+										v.HumanoidRootPart.CanCollide = false
+										v.HumanoidRootPart.Size = Vector3.new(60,60,60)
+										v.HumanoidRootPart.Transparency = 1
+										v.Humanoid:ChangeState(11)
+										v.Humanoid:ChangeState(14)
+										PirateCastle_Name = v.Name
+										PirateCastle_CFrame = v.HumanoidRootPart.CFrame
+										AutoClick()
+									until not Toggles.AutoPirateRaid.Value or not v.Parent or v.Humanoid.Health <= 0 or not workspace.Enemies:FindFirstChild(v.Name)
+								end
+							end
+						end
+					end
+				else
+					tweenToTarget(CFrameCastleRaid, false)
+				end
+			end)
+		end
+	end
+end
+
 -- Fruits Tab
 local Fruits = Tabs.Fruits:AddLeftGroupbox('Fruits')
 
 Fruits:AddToggle('FruitESP', {Text = 'Fruit ESP', Default = true, Callback = function(Value) end})
-local function BloxFruitsESP()
-	for i, v in pairs(workspace:GetChildren()) do
-		pcall(function()
-			if Toggles.FruitESP.Value then
+while wait() do
+	pcall(function()
+		if Toggles.FruitESP.Value then
+			for i, v in pairs(workspace:GetChildren()) do
 				if string.find(v.Name, "Fruit") then
 					if not v.Handle:FindFirstChild("NameEsp" .. Number) then
 						local FruitGui = Instance.new("BillboardGui", v.Handle)
@@ -1523,8 +1681,8 @@ local function BloxFruitsESP()
 					v.Handle:FindFirstChild("NameEsp" .. Number):Destroy()
 				end
 			end
-		end)
-	end
+		end
+	end)
 end;
 
 Fruits:AddToggle('AutoFruit', {Text = 'Auto Collect Fruits', Default = false, Callback = function(Value) end})
@@ -1564,7 +1722,7 @@ Fruits:AddToggle('BuyRandomFruit', {Text = 'Auto Buy Random Fruit', Default = fa
 spawn(function()
 	while wait(1) do
 		if Toggles.BuyRandomFruit.Value then
-			ReplicatedStorage.Remotes.CommF_:InvokeServer("Cousin","Buy")
+			CommF_:InvokeServer("Cousin","Buy")
 		end
 	end
 end)
@@ -1574,7 +1732,7 @@ spawn(function()
 	while wait(1) do
 		if Toggles.FruitNotify.Value then
 			for _, v in workspace:GetChildren() do
-				print('1654:', v)
+				print('1654: ', v)
 				if v.Name:find('Fruit') and v:IsA('Tool') then
 					StarterGui:SetCore('SendNotification', {
 						Title = 'Dropped Fruit Found: ' .. v.Name,
@@ -1602,7 +1760,6 @@ Fruits:AddToggle('StoreFruit', {Text = 'Auto Store Fruit', Default = false, Call
 local function StoreFruite(name_1, name_2)
 	local Character = Player.Character
 	local Backpack = Player.Backpack
-	local CommF_ = ReplicatedStorage.Remotes.CommF_
 	if Character:FindFirstChild(name_2) or Backpack:FindFirstChild(name_2) then
 		local args = {
 			[1] = "StoreFruit",
@@ -1613,7 +1770,7 @@ local function StoreFruite(name_1, name_2)
 	end
 end
 spawn(function()
-	while wait(0.5) do
+	while wait(1) do
 		if Toggles.StoreFruit.Value then
 			pcall(function()
 				StoreFruit("Rocket-Rocket", "Rocket Fruit")
@@ -1669,74 +1826,73 @@ local Misc = Tabs.Misc:AddLeftGroupbox('Misc')
 local Shop = Tabs.Shop:AddLeftGroupbox('Shop')
 
 Shop:AddToggle('RandomSurprise', {Text = 'Auto Random Surprise (50 Bones)', Default = false, Callback = function(Value) end})
-Toggles.RandomSurprise:OnChanged(function()
-	while Toggles.RandomSurprise.Value do
-		ReplicatedStorage.Remotes.CommF_:InvokeServer('Bones', 'Buy', 1, 1)
-		wait(0.2)
+while wait(0.2) do
+	if Toggles.RandomSurprise.Value then
+		CommF_:InvokeServer('Bones', 'Buy', 1, 1)
 	end
-end)
+end
 
 local ShopAbilities = Tabs.Shop:AddRightGroupbox('Abilities Shop')
-ShopAbilities:AddButton('Buy Air Jump [ $10,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyHaki', 'Geppo') end)
-ShopAbilities:AddButton('Buy Aura [ $25,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyHaki', 'Buso') end)
-ShopAbilities:AddButton('Buy Flashstep [ $25,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyHaki', 'Soru') end)
-ShopAbilities:AddButton('Buy Instinct [ $750,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('KenTalk', 'Buy') end)
+ShopAbilities:AddButton('Buy Air Jump [ $10,000 ]', function() CommF_:InvokeServer('BuyHaki', 'Geppo') end)
+ShopAbilities:AddButton('Buy Aura [ $25,000 ]', function() CommF_:InvokeServer('BuyHaki', 'Buso') end)
+ShopAbilities:AddButton('Buy Flashstep [ $25,000 ]', function() CommF_:InvokeServer('BuyHaki', 'Soru') end)
+ShopAbilities:AddButton('Buy Instinct [ $750,000 ]', function() CommF_:InvokeServer('KenTalk', 'Buy') end)
 
 ShopAbilities:AddToggle('AutoBuyAbilities', {Text = 'Auto Buy All Haki', Default = false, Callback = function(Value)
 	while wait(2) do
-		ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyHaki', 'Geppo')
-		ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyHaki', 'Buso')
-		ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyHaki', 'Soru')
-		ReplicatedStorage.Remotes.CommF_:InvokeServer('KenTalk', 'Buy')
+		CommF_:InvokeServer('BuyHaki', 'Geppo')
+		CommF_:InvokeServer('BuyHaki', 'Buso')
+		CommF_:InvokeServer('BuyHaki', 'Soru')
+		CommF_:InvokeServer('KenTalk', 'Buy')
 	end
 end})
 
 local ShopMisc = Tabs.Shop:AddLeftGroupbox('Misc')
-ShopMisc:AddButton("Reroll Race [ f3000 ]", function() ReplicatedStorage.Remotes.CommF_:InvokeServer(BlackbeardReward, Reroll, 2) end)
-ShopMisc:AddButton("Reset Stats [ f2500 ]", function() ReplicatedStorage.Remotes.CommF_:InvokeServer(BlackbeardReward, Refund, 2) end)
+ShopMisc:AddButton("Reroll Race [ f3000 ]", function() CommF_:InvokeServer(BlackbeardReward, Reroll, 2) end)
+ShopMisc:AddButton("Reset Stats [ f2500 ]", function() CommF_:InvokeServer(BlackbeardReward, Refund, 2) end)
 
 local Melee = Tabs.Shop:AddLeftGroupbox('Melees Shop')
-Melee:AddButton('Black Leg [ $150,000  ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyBlackLeg') end)
-Melee:AddButton('Electro [ $550,000  ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyElectro') end)
-Melee:AddButton('Fishman Karate [ $750,000  ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyFishmanKarate') end)
+Melee:AddButton('Black Leg [ $150,000  ]', function() CommF_:InvokeServer('BuyBlackLeg') end)
+Melee:AddButton('Electro [ $550,000  ]', function() CommF_:InvokeServer('BuyElectro') end)
+Melee:AddButton('Fishman Karate [ $750,000  ]', function() CommF_:InvokeServer('BuyFishmanKarate') end)
 Melee:AddButton('Dragon Claw [ f1,500 ]', function()
-	ReplicatedStorage.Remotes.CommF_:InvokeServer('BlackbeardReward', 'DragonClaw', '1')
-	ReplicatedStorage.Remotes.CommF_:InvokeServer('BlackbeardReward', 'DragonClaw', '2')
+	CommF_:InvokeServer('BlackbeardReward', 'DragonClaw', '1')
+	CommF_:InvokeServer('BlackbeardReward', 'DragonClaw', '2')
 end)
-Melee:AddButton('Superhuman [ $3,000,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuySuperhuman') end)
-Melee:AddButton('Death Step [ f5,000 / $5,000,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyDeathStep') end)
+Melee:AddButton('Superhuman [ $3,000,000 ]', function() CommF_:InvokeServer('BuySuperhuman') end)
+Melee:AddButton('Death Step [ f5,000 / $5,000,000 ]', function() CommF_:InvokeServer('BuyDeathStep') end)
 Melee:AddButton('Sharkman Karate [ f5,000 / $2,500,000 ]', function()
-	ReplicatedStorage.Remotes.CommF_:InvokeServer('BuySharkmanKarate', true)
-	ReplicatedStorage.Remotes.CommF_:InvokeServer('BuySharkmanKarate')
+	CommF_:InvokeServer('BuySharkmanKarate', true)
+	CommF_:InvokeServer('BuySharkmanKarate')
 end)
-Melee:AddButton('Electric Claw [ f5,000 / $3,000,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyElectricClaw') end)
-Melee:AddButton('Dragon Talon [ f5,000 / $3,000,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyDragonTalon') end)
-Melee:AddButton('God Human [ f5,000 / $5,000,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyGodhuman') end)
+Melee:AddButton('Electric Claw [ f5,000 / $3,000,000 ]', function() CommF_:InvokeServer('BuyElectricClaw') end)
+Melee:AddButton('Dragon Talon [ f5,000 / $3,000,000 ]', function() CommF_:InvokeServer('BuyDragonTalon') end)
+Melee:AddButton('God Human [ f5,000 / $5,000,000 ]', function() CommF_:InvokeServer('BuyGodhuman') end)
 
 local Accessories = Tabs.Shop:AddRightGroupbox('Accessories Shop')
-Accessories:AddButton('Black Cape [ $50,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyItem', 'Black Cape') end)
-Accessories:AddButton('Swordsman Hat [ $150,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyItem', 'Swordsman Hat') end)
-Accessories:AddButton('Tomoe Ring [ $500,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyItem', 'Tomoe Ring') end)
+Accessories:AddButton('Black Cape [ $50,000 ]', function() CommF_:InvokeServer('BuyItem', 'Black Cape') end)
+Accessories:AddButton('Swordsman Hat [ $150,000 ]', function() CommF_:InvokeServer('BuyItem', 'Swordsman Hat') end)
+Accessories:AddButton('Tomoe Ring [ $500,000 ]', function() CommF_:InvokeServer('BuyItem', 'Tomoe Ring') end)
 
 local Sword = Tabs.Shop:AddLeftGroupbox('Swords Shop')
-Sword:AddButton('Cutlass [ $1,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyItem', 'Cutlass') end)
-Sword:AddButton('Katana [ $1,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyItem', 'Katana') end)
-Sword:AddButton('Dual Katana [ $12,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyItem', 'Dual Katana') end)
-Sword:AddButton('Iron Mace [ $25,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyItem', 'Iron Mace') end)
-Sword:AddButton('Triple Katana [ $60,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyItem', 'Triple Katana') end)
-Sword:AddButton('Pipe [ $100,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyItem', 'Pipe') end)
-Sword:AddButton('Dual-Headed Blade [ $400,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyItem', 'Dual-Headed Blade') end)
-Sword:AddButton('Soul Cane [ $750,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyItem', 'Soul Cane') end)
-Sword:AddButton('Bisento [ $1,200,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyItem', 'Bisento') end)
-Sword:AddButton('Pole v2 [ f5,000 ]', function()	ReplicatedStorage.Remotes.CommF_:InvokeServer('ThunderGodTalk') end)
+Sword:AddButton('Cutlass [ $1,000 ]', function() CommF_:InvokeServer('BuyItem', 'Cutlass') end)
+Sword:AddButton('Katana [ $1,000 ]', function() CommF_:InvokeServer('BuyItem', 'Katana') end)
+Sword:AddButton('Dual Katana [ $12,000 ]', function() CommF_:InvokeServer('BuyItem', 'Dual Katana') end)
+Sword:AddButton('Iron Mace [ $25,000 ]', function() CommF_:InvokeServer('BuyItem', 'Iron Mace') end)
+Sword:AddButton('Triple Katana [ $60,000 ]', function() CommF_:InvokeServer('BuyItem', 'Triple Katana') end)
+Sword:AddButton('Pipe [ $100,000 ]', function() CommF_:InvokeServer('BuyItem', 'Pipe') end)
+Sword:AddButton('Dual-Headed Blade [ $400,000 ]', function() CommF_:InvokeServer('BuyItem', 'Dual-Headed Blade') end)
+Sword:AddButton('Soul Cane [ $750,000 ]', function() CommF_:InvokeServer('BuyItem', 'Soul Cane') end)
+Sword:AddButton('Bisento [ $1,200,000 ]', function() CommF_:InvokeServer('BuyItem', 'Bisento') end)
+Sword:AddButton('Pole v2 [ f5,000 ]', function()	CommF_:InvokeServer('ThunderGodTalk') end)
 
 local Gun = Tabs.Shop:AddRightGroupbox('Guns Shop')
-Gun:AddButton('Slingshot [ $5,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyItem', 'Slingshot') end)
-Gun:AddButton('Musket [ $8,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyItem', 'Musket') end)
-Gun:AddButton('Flintlock [ $10,500 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyItem', 'Flintlock') end)
-Gun:AddButton('Refined Slingshot [ $30,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyItem', 'Refined Slingshot') end)
-Gun:AddButton('Refined Flintlock [ $65,000 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BuyItem', 'Refined Flintlock') end)
-Gun:AddButton('Kabucha [ f1,500 ]', function() ReplicatedStorage.Remotes.CommF_:InvokeServer('BlackbeardReward', 'Slingshot', '2') end)
+Gun:AddButton('Slingshot [ $5,000 ]', function() CommF_:InvokeServer('BuyItem', 'Slingshot') end)
+Gun:AddButton('Musket [ $8,000 ]', function() CommF_:InvokeServer('BuyItem', 'Musket') end)
+Gun:AddButton('Flintlock [ $10,500 ]', function() CommF_:InvokeServer('BuyItem', 'Flintlock') end)
+Gun:AddButton('Refined Slingshot [ $30,000 ]', function() CommF_:InvokeServer('BuyItem', 'Refined Slingshot') end)
+Gun:AddButton('Refined Flintlock [ $65,000 ]', function() CommF_:InvokeServer('BuyItem', 'Refined Flintlock') end)
+Gun:AddButton('Kabucha [ f1,500 ]', function() CommF_:InvokeServer('BlackbeardReward', 'Slingshot', '2') end)
 
 -- Visuals Tab
 local Sense = loadstring(game:HttpGet('https://raw.githubusercontent.com/jensonhirst/Sirius/refs/heads/request/library/sense/source.lua'))()
@@ -1788,7 +1944,7 @@ Tab1:AddButton('Enable All', function()
 		'EnemyTracerOutline', 'EnemyOffScreenArrow', 'EnemyOffScreenArrowOutline',
 		'EnemyChams','EnemyChamsVisibleOnly'
 	}
-	for _, v in pairs(togglesToEnable) do
+	for i, v in pairs(togglesToEnable) do
 		if Toggles[v] then
 			Toggles[v]:SetValue(true)
 		end
@@ -1837,252 +1993,160 @@ Tab2:AddButton('Enable All', function()
 	end
 end)
 
---[[ local ESPColors = Tabs.Visuals:AddRightTabbox()
+local ESPColors = Tabs.Visuals:AddRightTabbox()
 
 local Tab3 = ESPColors:AddTab('Enemy Colors')
-Tab3:AddLabel('Enemy Box Color'):AddColorPicker('EnemyBoxColor', { Default = Color3.new(1, 0, 0), Callback = function(Value) end})
-Tab3:AddLabel('Enemy Box Outline Color'):AddColorPicker('EnemyBoxOutlineColor', { Default = Color3.new(1, 0, 0), Callback = function(Value) end})
-Tab3:AddLabel('Enemy Box Fill Color'):AddColorPicker('EnemyBoxFillColor', { Default = Color3.new(1, 0, 0), Callback = function(Value) end})
-Tab3:AddLabel('Enemy Healthy Color'):AddColorPicker('EnemyHealthyColor', { Default = Color3.new(0, 1, 0), Callback = function(Value) end})
-Tab3:AddLabel('Enemy Unhealthy Color'):AddColorPicker('EnemyUnhealthyColor', { Default = Color3.new(1, 0, 0), Callback = function(Value) end})
-Tab3:AddLabel('Enemy Health Bar Outline Color'):AddColorPicker('EnemyHealthBarOutlineColor', { Default = Color3.new(), Callback = function(Value) end})
-Tab3:AddLabel('Enemy Health Text Color'):AddColorPicker('EnemyHealthTextColor', { Default = Color3.new(1, 1, 1), Callback = function(Value) end})
-Tab3:AddLabel('Enemy Health Text Outline Color'):AddColorPicker('EnemyHealthTextOutlineColor', { Default = Color3.new(), Callback = function(Value) end})
-Tab3:AddLabel('Enemy 3D Box Color'):AddColorPicker('Enemy3DBoxColor', { Default = Color3.new(1, 0, 0), Callback = function(Value) end})
-Tab3:AddLabel('Enemy Name Color'):AddColorPicker('EnemyNameColor', { Default = Color3.new(1, 1, 1), Callback = function(Value) end})
-Tab3:AddLabel('Enemy Name Outline Color'):AddColorPicker('EnemyNameOutlineColor', { Default = Color3.new(), Callback = function(Value) end})
-Tab3:AddLabel('Enemy Weapon Color'):AddColorPicker('EnemyWeaponColor', { Default = Color3.new(1, 1, 1), Callback = function(Value) end})
-Tab3:AddLabel('Enemy Weapon Outline Color'):AddColorPicker('EnemyWeaponOutlineColor', { Default = Color3.new(), Callback = function(Value) end})
-Tab3:AddLabel('Enemy Distance Color'):AddColorPicker('EnemyDistanceColor', { Default = Color3.new(1, 1, 1), Callback = function(Value) end })
-Tab3:AddLabel('Enemy Distance Outline Color'):AddColorPicker('EnemyDistanceOutlineColor', { Default = Color3.new(), Callback = function(Value) end })
-Tab3:AddLabel('Enemy Tracer Color'):AddColorPicker('EnemyTracerColor', { Default = Color3.new(1, 0, 0), Callback = function(Value) end })
-Tab3:AddLabel('Enemy Tracer Outline Color'):AddColorPicker('EnemyTracerOutlineColor', { Default = Color3.new(0, 0, 0), Callback = function(Value) end })
-Tab3:AddLabel('Enemy Off Screen Arrow Color'):AddColorPicker('EnemyOffScreenArrowColor', { Default = Color3.new(1, 0, 0), Callback = function(Value) end })
-Tab3:AddLabel('Enemy Off Screen Arrow Outline Color'):AddColorPicker('EnemyOffScreenArrowOutlineColor', { Default = Color3.new(0, 0, 0), Callback = function(Value) end })
-Tab3:AddLabel('Enemy Chams Fill Color'):AddColorPicker('EnemyChamsFillColor', { Default = Color3.new(0, 0, 0), Callback = function(Value) end })
-Tab3:AddLabel('Enemy Chams Outline Color'):AddColorPicker('EnemyChamsOutlineColor', { Default = Color3.new(1, 0, 0), Callback = function(Value) end }) ]]
+local enemyColorOptions = {
+	{ label = 'Enemy Box Color', key = 'EnemyBoxColor', default = Color3.new(1, 0, 0) },
+	{ label = 'Enemy Box Outline Color', key = 'EnemyBoxOutlineColor', default = Color3.new(1, 0, 0) },
+	{ label = 'Enemy Box Fill Color', key = 'EnemyBoxFillColor', default = Color3.new(1, 0, 0) },
+	{ label = 'Enemy Healthy Color', key = 'EnemyHealthyColor', default = Color3.new(0, 1, 0) },
+	{ label = 'Enemy Unhealthy Color', key = 'EnemyUnhealthyColor', default = Color3.new(1, 0, 0) },
+	{ label = 'Enemy Health Bar Outline Color', key = 'EnemyHealthBarOutlineColor', default = Color3.new() },
+	{ label = 'Enemy Health Text Color', key = 'EnemyHealthTextColor', default = Color3.new(1, 1, 1) },
+	{ label = 'Enemy Health Text Outline Color', key = 'EnemyHealthTextOutlineColor', default = Color3.new() },
+	{ label = 'Enemy 3D Box Color', key = 'Enemy3DBoxColor', default = Color3.new(1, 0, 0) },
+	{ label = 'Enemy Name Color', key = 'EnemyNameColor', default = Color3.new(1, 1, 1) },
+	{ label = 'Enemy Name Outline Color', key = 'EnemyNameOutlineColor', default = Color3.new() },
+	{ label = 'Enemy Weapon Color', key = 'EnemyWeaponColor', default = Color3.new(1, 1, 1) },
+	{ label = 'Enemy Weapon Outline Color', key = 'EnemyWeaponOutlineColor', default = Color3.new() },
+	{ label = 'Enemy Distance Color', key = 'EnemyDistanceColor', default = Color3.new(1, 1, 1) },
+	{ label = 'Enemy Distance Outline Color', key = 'EnemyDistanceOutlineColor', default = Color3.new() },
+	{ label = 'Enemy Tracer Color', key = 'EnemyTracerColor', default = Color3.new(1, 0, 0) },
+	{ label = 'Enemy Tracer Outline Color', key = 'EnemyTracerOutlineColor', default = Color3.new(0, 0, 0) },
+	{ label = 'Enemy Off Screen Arrow Color', key = 'EnemyOffScreenArrowColor', default = Color3.new(1, 0, 0) },
+	{ label = 'Enemy Off Screen Arrow Outline Color', key = 'EnemyOffScreenArrowOutlineColor', default = Color3.new(0, 0, 0) },
+	{ label = 'Enemy Chams Fill Color', key = 'EnemyChamsFillColor', default = Color3.new(0, 0, 0) },
+	{ label = 'Enemy Chams Outline Color', key = 'EnemyChamsOutlineColor', default = Color3.new(1, 0, 0) },
+}
+for _, opt in ipairs(enemyColorOptions) do
+	Tab3:AddLabel(opt.label):AddColorPicker(opt.key, { Default = opt.default, Callback = function(Value) end })
+end
 
---[[ local Tab4 = ESPColors:AddTab('Friendly Colors')
-Tab4:AddLabel('Friendly Box Color'):AddColorPicker('FriendlyBoxColor', { Default = Color3.new(0, 1, 0), Callback = function(Value) end})
-Tab4:AddLabel('Friendly Box Outline Color'):AddColorPicker('FriendlyBoxOutlineColor', { Default = Color3.new(), Callback = function(Value) end})
-Tab4:AddLabel('Friendly Box Fill Color'):AddColorPicker('FriendlyBoxFillColor', { Default = Color3.new(0, 1, 0), Callback = function(Value) end})
-Tab4:AddLabel('Friendly Healthy Color'):AddColorPicker('FriendlyHealthyColor', { Default = Color3.new(0, 1, 0), Callback = function(Value) end})
-Tab4:AddLabel('Friendly Unhealthy Color'):AddColorPicker('FriendlyUnhealthyColor', { Default = Color3.new(1, 0, 0), Callback = function(Value) end})
-Tab4:AddLabel('Friendly Health Bar Outline Color'):AddColorPicker('FriendlyHealthBarOutlineColor', { Default = Color3.new(), Callback = function(Value) end})
-Tab4:AddLabel('Friendly Health Text Color'):AddColorPicker('FriendlyHealthTextColor', { Default = Color3.new(1, 1, 1), Callback = function(Value) end})
-Tab4:AddLabel('Friendly Health Text Outline Color'):AddColorPicker('FriendlyHealthTextOutlineColor', { Default = Color3.new(), Callback = function(Value) end})
-Tab4:AddLabel('Friendly 3D Box Color'):AddColorPicker('Friendly3DBoxColor', { Default = Color3.new(0, 1, 0), Callback = function(Value) end})
-Tab4:AddLabel('Friendly Name Color'):AddColorPicker('FriendlyNameColor', { Default = Color3.new(1, 1, 1), Callback = function(Value) end})
-Tab4:AddLabel('Friendly Name Outline Color'):AddColorPicker('FriendlyNameOutlineColor', { Default = Color3.new(), Callback = function(Value) end})
-Tab4:AddLabel('Friendly Weapon Color'):AddColorPicker('FriendlyWeaponColor', { Default = Color3.new(1, 1, 1), Callback = function(Value) end})
-Tab4:AddLabel('Friendly Weapon Outline Color'):AddColorPicker('FriendlyWeaponOutlineColor', { Default = Color3.new(), Callback = function(Value) end})
-Tab4:AddLabel('Friendly Distance Color'):AddColorPicker('FriendlyDistanceColor', { Default = Color3.new(1, 1, 1), Callback = function(Value) end })
-Tab4:AddLabel('Friendly Distance Outline Color'):AddColorPicker('FriendlyDistanceOutlineColor', { Default = Color3.new(), Callback = function(Value) end })
-Tab4:AddLabel('Friendly Trace Color'):AddColorPicker('FriendlyTraceColor', { Default = Color3.new(0, 1, 0), Callback = function(Value) end })
-Tab4:AddLabel('Friendly Trace Outline Color'):AddColorPicker('FriendlyTraceOutlineColor', { Default = Color3.new(0, 0, 0), Callback = function(Value) end })
-Tab4:AddLabel('Friendly Off Screen Arrow Color'):AddColorPicker('FriendlyOffScreenArrowColor', { Default = Color3.new(0, 1, 0), Callback = function(Value) end })
-Tab4:AddLabel('Friendly Off Screen Arrow Outline Color'):AddColorPicker('FriendlyOffScreenArrowOutlineColor', { Default = Color3.new(0, 0, 0), Callback = function(Value) end })
-Tab4:AddLabel('Friendly Chams Fill Color'):AddColorPicker('FriendlyChamsFillColor', { Default = Color3.new(0, 0, 0), Callback = function(Value) end })
-Tab4:AddLabel('Friendly Chams Outline Color'):AddColorPicker('FriendlyChamsOutlineColor', { Default = Color3.new(0, 1, 0), Callback = function(Value) end }) ]]
--- Enemy Toggles
-Toggles.EnemyEnabled:OnChanged(function() Sense.teamSettings.enemy.enabled = Toggles.EnemyEnabled.Value end)
-Toggles.EnemyBox:OnChanged(function() Sense.teamSettings.enemy.box = Toggles.EnemyBox.Value end)
-Toggles.EnemyBoxOutline:OnChanged(function() Sense.teamSettings.enemy.boxOutline = Toggles.EnemyBoxOutline.Value end)
-Toggles.EnemyBoxFilled:OnChanged(function() Sense.teamSettings.enemy.boxFilled = Toggles.EnemyBoxFilled.Value end)
-Toggles.Enemy3DBox:OnChanged(function() Sense.teamSettings.enemy.box3d = Toggles.Enemy3DBox.Value end)
-Toggles.EnemyHealthText:OnChanged(function() Sense.teamSettings.enemy.healthText = Toggles.EnemyHealthText.Value end)
-Toggles.EnemyHealthBar:OnChanged(function() Sense.teamSettings.enemy.healthBar = Toggles.EnemyHealthBar.Value end)
-Toggles.EnemyHealthBarOutline:OnChanged(function() Sense.teamSettings.enemy.healthBarOutline = Toggles.EnemyHealthBarOutline.Value end)
-Toggles.EnemyName:OnChanged(function() Sense.teamSettings.enemy.name = Toggles.EnemyName.Value end)
-Toggles.EnemyNameOutline:OnChanged(function() Sense.teamSettings.enemy.nameOutline = Toggles.EnemyNameOutline.Value end)
-Toggles.EnemyWeapon:OnChanged(function() Sense.teamSettings.enemy.weapon = Toggles.EnemyWeapon.Value end)
-Toggles.EnemyWeaponOutline:OnChanged(function() Sense.teamSettings.enemy.weaponOutline = Toggles.EnemyWeaponOutline.Value end)
-Toggles.EnemyDistance:OnChanged(function() Sense.teamSettings.enemy.distance = Toggles.EnemyDistance.Value end)
-Toggles.EnemyDistanceOutline:OnChanged(function() Sense.teamSettings.enemy.distanceOutline = Toggles.EnemyDistanceOutline.Value end)
-Toggles.EnemyTracer:OnChanged(function() Sense.teamSettings.enemy.tracer = Toggles.EnemyTracer.Value end)
-Options.EnemyTracerOrigin:OnChanged(function() Sense.teamSettings.enemy.tracerOrigin = Options.EnemyTracerOrigin.Value end)
-Toggles.EnemyTracerOutline:OnChanged(function() Sense.teamSettings.enemy.tracerOutline = Toggles.EnemyTracerOutline.Value end)
-Toggles.EnemyOffScreenArrow:OnChanged(function() Sense.teamSettings.enemy.offScreenArrow = Toggles.EnemyOffScreenArrow.Value end)
-Toggles.EnemyOffScreenArrowOutline:OnChanged(function() Sense.teamSettings.enemy.offScreenArrowOutline = Toggles.EnemyOffScreenArrowOutline.Value end)
-Options.EnemyOffScreenArrowSize:OnChanged(function() Sense.teamSettings.enemy.offScreenArrowSize = Options.EnemyOffScreenArrowSize.Value end)
-Options.EnemyOffScreenArrowRadius:OnChanged(function() Sense.teamSettings.enemy.offScreenArrowRadius = Options.EnemyOffScreenArrowRadius.Value end)
-Toggles.EnemyChams:OnChanged(function() Sense.teamSettings.enemy.chams = Toggles.EnemyChams.Value end)
-Toggles.EnemyChamsVisibleOnly:OnChanged(function() Sense.teamSettings.enemy.chamsVisibleOnly = Toggles.EnemyChamsVisibleOnly.Value end)
+local Tab4 = ESPColors:AddTab('Friendly Colors')
+local friendlyColorOptions = {
+	{ label = 'Friendly Box Color', key = 'FriendlyBoxColor', default = Color3.new(0, 1, 0) },
+	{ label = 'Friendly Box Outline Color', key = 'FriendlyBoxOutlineColor', default = Color3.new() },
+	{ label = 'Friendly Box Fill Color', key = 'FriendlyBoxFillColor', default = Color3.new(0, 1, 0) },
+	{ label = 'Friendly Healthy Color', key = 'FriendlyHealthyColor', default = Color3.new(0, 1, 0) },
+	{ label = 'Friendly Unhealthy Color', key = 'FriendlyUnhealthyColor', default = Color3.new(1, 0, 0) },
+	{ label = 'Friendly Health Bar Outline Color', key = 'FriendlyHealthBarOutlineColor', default = Color3.new() },
+	{ label = 'Friendly Health Text Color', key = 'FriendlyHealthTextColor', default = Color3.new(1, 1, 1) },
+	{ label = 'Friendly Health Text Outline Color', key = 'FriendlyHealthTextOutlineColor', default = Color3.new() },
+	{ label = 'Friendly 3D Box Color', key = 'Friendly3DBoxColor', default = Color3.new(0, 1, 0) },
+	{ label = 'Friendly Name Color', key = 'FriendlyNameColor', default = Color3.new(1, 1, 1) },
+	{ label = 'Friendly Name Outline Color', key = 'FriendlyNameOutlineColor', default = Color3.new() },
+	{ label = 'Friendly Weapon Color', key = 'FriendlyWeaponColor', default = Color3.new(1, 1, 1) },
+	{ label = 'Friendly Weapon Outline Color', key = 'FriendlyWeaponOutlineColor', default = Color3.new() },
+	{ label = 'Friendly Distance Color', key = 'FriendlyDistanceColor', default = Color3.new(1, 1, 1) },
+	{ label = 'Friendly Distance Outline Color', key = 'FriendlyDistanceOutlineColor', default = Color3.new() },
+	{ label = 'Friendly Trace Color', key = 'FriendlyTraceColor', default = Color3.new(0, 1, 0) },
+	{ label = 'Friendly Trace Outline Color', key = 'FriendlyTraceOutlineColor', default = Color3.new(0, 0, 0) },
+	{ label = 'Friendly Off Screen Arrow Color', key = 'FriendlyOffScreenArrowColor', default = Color3.new(0, 1, 0) },
+	{ label = 'Friendly Off Screen Arrow Outline Color', key = 'FriendlyOffScreenArrowOutlineColor', default = Color3.new(0, 0, 0) },
+	{ label = 'Friendly Chams Fill Color', key = 'FriendlyChamsFillColor', default = Color3.new(0, 0, 0) },
+	{ label = 'Friendly Chams Outline Color', key = 'FriendlyChamsOutlineColor', default = Color3.new(0, 1, 0) },
+}
 
--- Friendly Toggles
-Toggles.FriendlyEnabled:OnChanged(function() Sense.teamSettings.friendly.enabled = Toggles.FriendlyEnabled.Value end)
-Toggles.FriendlyBox:OnChanged(function() Sense.teamSettings.friendly.box = Toggles.FriendlyBox.Value end)
-Toggles.FriendlyBoxOutline:OnChanged(function() Sense.teamSettings.friendly.boxOutline = Toggles.FriendlyBoxOutline.Value end)
-Toggles.FriendlyBoxFilled:OnChanged(function() Sense.teamSettings.friendly.boxFilled = Toggles.FriendlyBoxFilled.Value end)
-Toggles.Friendly3DBox:OnChanged(function() Sense.teamSettings.friendly.box3d = Toggles.Friendly3DBox.Value end)
-Toggles.FriendlyHealthText:OnChanged(function() Sense.teamSettings.friendly.healthText = Toggles.FriendlyHealthText.Value end)
-Toggles.FriendlyHealthBar:OnChanged(function() Sense.teamSettings.friendly.healthBar = Toggles.FriendlyHealthBar.Value end)
-Toggles.FriendlyHealthBarOutline:OnChanged(function() Sense.teamSettings.friendly.healthBarOutline = Toggles.FriendlyHealthBarOutline.Value end)
-Toggles.FriendlyName:OnChanged(function() Sense.teamSettings.friendly.name = Toggles.FriendlyName.Value end)
-Toggles.FriendlyNameOutline:OnChanged(function() Sense.teamSettings.friendly.nameOutline = Toggles.FriendlyNameOutline.Value end)
-Toggles.FriendlyWeapon:OnChanged(function() Sense.teamSettings.friendly.weapon = Toggles.FriendlyWeapon.Value end)
-Toggles.FriendlyWeaponOutline:OnChanged(function() Sense.teamSettings.friendly.weaponOutline = Toggles.FriendlyWeaponOutline.Value end)
-Toggles.FriendlyDistance:OnChanged(function() Sense.teamSettings.friendly.distance = Toggles.FriendlyDistance.Value end)
-Toggles.FriendlyDistanceOutline:OnChanged(function() Sense.teamSettings.friendly.distanceOutline = Toggles.FriendlyDistanceOutline.Value end)
-Toggles.FriendlyTracer:OnChanged(function() Sense.teamSettings.friendly.tracer = Toggles.FriendlyTracer.Value end)
-Options.FriendlyTracerOrigin:OnChanged(function() Sense.teamSettings.friendly.tracerOrigin = Options.FriendlyTracerOrigin.Value end)
-Toggles.FriendlyTracerOutline:OnChanged(function() Sense.teamSettings.friendly.tracerOutline = Toggles.FriendlyTracerOutline.Value end)
-Toggles.FriendlyOffScreenArrow:OnChanged(function() Sense.teamSettings.friendly.offScreenArrow = Toggles.FriendlyOffScreenArrow.Value end)
-Toggles.FriendlyOffScreenArrowOutline:OnChanged(function() Sense.teamSettings.friendly.offScreenArrowOutline = Toggles.FriendlyOffScreenArrowOutline.Value end)
-Options.FriendlyOffScreenArrowSize:OnChanged(function() Sense.teamSettings.friendly.offScreenArrowSize = Options.FriendlyOffScreenArrowSize.Value end)
-Options.FriendlyOffScreenArrowRadius:OnChanged(function() Sense.teamSettings.friendly.offScreenArrowRadius = Options.FriendlyOffScreenArrowRadius.Value end)
-Toggles.FriendlyChams:OnChanged(function() Sense.teamSettings.friendly.chams = Toggles.FriendlyChams.Value end)
-Toggles.FriendlyChamsVisibleOnly:OnChanged(function() Sense.teamSettings.friendly.chamsVisibleOnly = Toggles.FriendlyChamsVisibleOnly.Value end)
+for _, opt in ipairs(friendlyColorOptions) do
+	Tab4:AddLabel(opt.label):AddColorPicker(opt.key, { Default = opt.default, Callback = function(Value) end })
+end
 
--- Enemy Colors
---[[ Options.EnemyBoxColor:OnChanged(function()
-	Sense.teamSettings.enemy.boxColor = Options.EnemyBoxColor.Value
-end)
-Options.EnemyBoxOutlineColor:OnChanged(function()
-	Sense.teamSettings.enemy.boxOutlineColor = Options.EnemyBoxOutlineColor.Value
-end)
-Options.EnemyBoxFillColor:OnChanged(function()
-	Sense.teamSettings.enemy.boxFillColor = Options.EnemyBoxFillColor.Value
-end)
-Options.EnemyHealthyColor:OnChanged(function()
-	Sense.teamSettings.enemy.healthyColor = Options.EnemyHealthyColor.Value
-end)
-Options.EnemyUnhealthyColor:OnChanged(function()
-	Sense.teamSettings.enemy.unhealthyColor = Options.EnemyUnhealthyColor.Value
-end)
-Options.EnemyHealthBarOutlineColor:OnChanged(function()
-	Sense.teamSettings.enemy.healthBarOutlineColor = Options.EnemyHealthBarOutlineColor.Value
-end)
-Options.EnemyHealthTextColor:OnChanged(function()
-	Sense.teamSettings.enemy.healthTextColor = Options.EnemyHealthTextColor.Value
-end)
-Options.EnemyHealthTextOutlineColor:OnChanged(function()
-	Sense.teamSettings.enemy.healthTextOutlineColor = Options.EnemyHealthTextOutlineColor.Value
-end)
-Options.Enemy3DBoxColor:OnChanged(function()
-	Sense.teamSettings.enemy.box3dColor = Options.Enemy3DBoxColor.Value
-end)
-Options.EnemyNameColor:OnChanged(function()
-	Sense.teamSettings.enemy.nameColor = Options.EnemyNameColor.Value
-end)
-Options.EnemyNameOutlineColor:OnChanged(function()
-	Sense.teamSettings.enemy.nameOutlineColor = Options.EnemyNameOutlineColor.Value
-end)
-Options.EnemyWeaponColor:OnChanged(function()
-	Sense.teamSettings.enemy.weaponColor = Options.EnemyWeaponColor.Value
-end)
-Options.EnemyWeaponOutlineColor:OnChanged(function()
-	Sense.teamSettings.enemy.weaponOutlineColor = Options.EnemyWeaponOutlineColor.Value
-end)
-Options.EnemyDistanceColor:OnChanged(function()
-	Sense.teamSettings.enemy.distanceColor = Options.EnemyDistanceColor.Value
-end)
-Options.EnemyDistanceOutlineColor:OnChanged(function()
-	Sense.teamSettings.enemy.distanceOutlineColor = Options.EnemyDistanceOutlineColor.Value
-end)
-Options.EnemyTracerColor:OnChanged(function()
-	Sense.teamSettings.enemy.tracerColor = Options.EnemyTracerColor.Value
-end)
-Options.EnemyTracerOutlineColor:OnChanged(function()
-	Sense.teamSettings.enemy.tracerOutlineColor = Options.EnemyTracerOutlineColor.Value
-end)
-Options.EnemyOffScreenArrowColor:OnChanged(function()
-	Sense.teamSettings.enemy.offScreenArrowColor = Options.EnemyOffScreenArrowColor.Value
-end)
-Options.EnemyOffScreenArrowOutlineColor:OnChanged(function()
-	Sense.teamSettings.enemy.offScreenArrowOutlineColor = Options.EnemyOffScreenArrowOutlineColor.Value
-end)
-Options.EnemyChamsFillColor:OnChanged(function()
-	Sense.teamSettings.enemy.chamsFillColor = Options.EnemyChamsFillColor.Value
-end)
-Options.EnemyChamsOutlineColor:OnChanged(function()
-	Sense.teamSettings.enemy.chamsOutlineColor = Options.EnemyChamsOutlineColor.Value
-end)
+local function connectTogglesAndOptions(team)
+	local toggleMap = {
+		Enabled = "enabled",
+		Box = "box",
+		BoxOutline = "boxOutline",
+		BoxFilled = "boxFilled",
+		["3DBox"] = "box3d",
+		HealthText = "healthText",
+		HealthBar = "healthBar",
+		HealthBarOutline = "healthBarOutline",
+		Name = "name",
+		NameOutline = "nameOutline",
+		Weapon = "weapon",
+		WeaponOutline = "weaponOutline",
+		Distance = "distance",
+		DistanceOutline = "distanceOutline",
+		Tracer = "tracer",
+		TracerOutline = "tracerOutline",
+		OffScreenArrow = "offScreenArrow",
+		OffScreenArrowOutline = "offScreenArrowOutline",
+		Chams = "chams",
+		ChamsVisibleOnly = "chamsVisibleOnly",
+		Trace = "tracer", -- for FriendlyTrace
+		TraceOutline = "tracerOutline", -- for FriendlyTraceOutline
+	}
 
--- Friendly Colors
-Options.FriendlyBoxColor:OnChanged(function()
-	Sense.teamSettings.friendly.boxColor = Options.FriendlyBoxColor.Value
-end)
+	local optionMap = {
+		TracerOrigin = "tracerOrigin",
+		OffScreenArrowSize = "offScreenArrowSize",
+		OffScreenArrowRadius = "offScreenArrowRadius",
+	}
 
-Options.FriendlyBoxOutlineColor:OnChanged(function()
-	Sense.teamSettings.friendly.boxOutlineColor = Options.FriendlyBoxOutlineColor.Value
-end)
+	for opt, senseKey in pairs(toggleMap) do
+		local toggleName = team .. opt
+		if Toggles[toggleName] then
+			Toggles[toggleName]:OnChanged(function()
+				Sense.teamSettings[team:lower()][senseKey] = Toggles[toggleName].Value
+			end)
+		end
+	end
 
-Options.FriendlyBoxFillColor:OnChanged(function()
-	Sense.teamSettings.friendly.boxFillColor = Options.FriendlyBoxFillColor.Value
-end)
+	for opt, senseKey in pairs(optionMap) do
+		local optionName = team .. opt
+		if Options[optionName] then
+			Options[optionName]:OnChanged(function()
+				Sense.teamSettings[team:lower()][senseKey] = Options[optionName].Value
+			end)
+		end
+	end
+end
 
-Options.FriendlyHealthyColor:OnChanged(function()
-	Sense.teamSettings.friendly.healthyColor = Options.FriendlyHealthyColor.Value
-end)
+connectTogglesAndOptions("Enemy")
+connectTogglesAndOptions("Friendly")
 
-Options.FriendlyUnhealthyColor:OnChanged(function()
-	Sense.teamSettings.friendly.unhealthyColor = Options.FriendlyUnhealthyColor.Value
-end)
+-- Dynamically connect all color pickers to Sense settings
 
-Options.FriendlyHealthBarOutlineColor:OnChanged(function()
-	Sense.teamSettings.friendly.healthBarOutlineColor = Options.FriendlyHealthBarOutlineColor.Value
-end)
+local function connectColorPickers(team)
+	local colorMap = {
+		BoxColor = "boxColor",
+		BoxOutlineColor = "boxOutlineColor",
+		BoxFillColor = "boxFillColor",
+		HealthyColor = "healthyColor",
+		UnhealthyColor = "unhealthyColor",
+		HealthBarOutlineColor = "healthBarOutlineColor",
+		HealthTextColor = "healthTextColor",
+		HealthTextOutlineColor = "healthTextOutlineColor",
+		["3DBoxColor"] = "box3dColor",
+		NameColor = "nameColor",
+		NameOutlineColor = "nameOutlineColor",
+		WeaponColor = "weaponColor",
+		WeaponOutlineColor = "weaponOutlineColor",
+		DistanceColor = "distanceColor",
+		DistanceOutlineColor = "distanceOutlineColor",
+		TracerColor = "tracerColor",
+		TracerOutlineColor = "tracerOutlineColor",
+		OffScreenArrowColor = "offScreenArrowColor",
+		OffScreenArrowOutlineColor = "offScreenArrowOutlineColor",
+		ChamsFillColor = "chamsFillColor",
+		ChamsOutlineColor = "chamsOutlineColor",
+		TraceColor = "tracerColor", -- for FriendlyTraceColor
+		TraceOutlineColor = "tracerOutlineColor", -- for FriendlyTraceOutlineColor
+	}
 
-Options.FriendlyHealthTextColor:OnChanged(function()
-	Sense.teamSettings.friendly.healthTextColor = Options.FriendlyHealthTextColor.Value
-end)
+	for opt, senseKey in pairs(colorMap) do
+		local optionName = team .. opt
+		if Options[optionName] then
+			Options[optionName]:OnChanged(function()
+				Sense.teamSettings[team:lower()][senseKey] = Options[optionName].Value
+			end)
+		end
+	end
+end
 
-Options.FriendlyHealthTextOutlineColor:OnChanged(function()
-	Sense.teamSettings.friendly.healthTextOutlineColor = Options.FriendlyHealthTextOutlineColor.Value
-end)
-
-Options.Friendly3DBoxColor:OnChanged(function()
-	Sense.teamSettings.friendly.box3dColor = Options.Friendly3DBoxColor.Value
-end)
-
-Options.FriendlyNameColor:OnChanged(function()
-	Sense.teamSettings.friendly.nameColor = Options.FriendlyNameColor.Value
-end)
-
-Options.FriendlyNameOutlineColor:OnChanged(function()
-	Sense.teamSettings.friendly.nameOutlineColor = Options.FriendlyNameOutlineColor.Value
-end)
-
-Options.FriendlyWeaponColor:OnChanged(function()
-	Sense.teamSettings.friendly.weaponColor = Options.FriendlyWeaponColor.Value
-end)
-
-Options.FriendlyWeaponOutlineColor:OnChanged(function()
-	Sense.teamSettings.friendly.weaponOutlineColor = Options.FriendlyWeaponOutlineColor.Value
-end)
-
-Options.FriendlyDistanceColor:OnChanged(function()
-	Sense.teamSettings.friendly.distanceColor = Options.FriendlyDistanceColor.Value
-end)
-
-Options.FriendlyDistanceOutlineColor:OnChanged(function()
-	Sense.teamSettings.friendly.distanceOutlineColor = Options.FriendlyDistanceOutlineColor.Value
-end)
-
-Options.FriendlyTraceColor:OnChanged(function()
-	Sense.teamSettings.friendly.tracerColor = Options.FriendlyTraceColor.Value
-end)
-
-Options.FriendlyTraceOutlineColor:OnChanged(function()
-	Sense.teamSettings.friendly.tracerOutlineColor = Options.FriendlyTraceOutlineColor.Value
-end)
-
-Options.FriendlyOffScreenArrowColor:OnChanged(function()
-	Sense.teamSettings.friendly.offScreenArrowColor = Options.FriendlyOffScreenArrowColor.Value
-end)
-
-Options.FriendlyOffScreenArrowOutlineColor:OnChanged(function()
-	Sense.teamSettings.friendly.offScreenArrowOutlineColor = Options.FriendlyOffScreenArrowOutlineColor.Value
-end)
-
-Options.FriendlyChamsFillColor:OnChanged(function()
-	Sense.teamSettings.friendly.chamsFillColor = Options.FriendlyChamsFillColor.Value
-end)
-
-Options.FriendlyChamsOutlineColor:OnChanged(function()
-	Sense.teamSettings.friendly.chamsOutlineColor = Options.FriendlyChamsOutlineColor.Value
-end) ]]
+connectColorPickers("Enemy")
+connectColorPickers("Friendly")
 
 local ESPMisc = Tabs.Visuals:AddRightGroupbox('Misc')
 
