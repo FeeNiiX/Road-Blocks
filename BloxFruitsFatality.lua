@@ -16,34 +16,26 @@ local StarterGui = game:GetService('StarterGui')
 local Lighting = game:GetService('Lighting')
 local Players = game:GetService('Players')
 local Stats = game:GetService('Stats')
-local Timer = tick()
 
+local Timer = tick()
 local plr = Players.LocalPlayer
 local CommF_ = ReplicatedStorage.Remotes.CommF_
+local Meters = 100 / 28
 
 -- TODO --
 -- Add Fast attack
 -- Add Hitbox Expander (maybe its just humanoidrootpart butt lift)
 -- Smart Teleport (I already know how to 😈)
 
-repeat wait()
-	local Main = plr.PlayerGui:WaitForChild('Main (minimal)')
-	if Main.ChooseTeam.Visible then
-		if SelectedTeam == "Pirate" then
-			for i, v in pairs(getconnections(Main.ChooseTeam.Container.Pirates.Frame.TextButton.Activated)) do
-				v.Function()
-			end
-		elseif SelectedTeam == "Marine" then
-			for i, v in pairs(getconnections(Main.ChooseTeam.Container.Marines.Frame.TextButton.Activated)) do
-				v.Function()
-			end
-		else
-			for i, v in pairs(getconnections(Main.ChooseTeam.Container.Pirates.Frame.TextButton.Activated)) do
+if plr.PlayerGui:FindFirstChild("Main (minimal)") and plr.PlayerGui['Main (minimal)']:FindFirstChild("ChooseTeam") then
+	repeat wait()
+		if plr.PlayerGui["Main (minimal)"].ChooseTeam.Visible == true then
+			for i, v in pairs(getconnections(plr.PlayerGui['Main (minimal)'].ChooseTeam.Container.Marines.Frame.TextButton.Activated)) do
 				v.Function()
 			end
 		end
-	end
-until plr.Team ~= nil and game:IsLoaded()
+	until plr.Team ~= nil and game:IsLoaded()
+end
 
 -- Functions
 
@@ -52,7 +44,7 @@ local function getRoot()
 	return rootPart
 end
 
-local function ServerHop()
+local function serverHop()
 	-- infinite yield server hop ofc
 	local servers = {}
 	local req = game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true")
@@ -229,13 +221,19 @@ local function getTargetPosition(target)
 	end
 end
 
-local function tweenToTarget(target, offset)
+local function Tween(target)
 	root = getRoot()
-	local targetPos = getTargetPosition(target)
-	if offset then
-		targetPos = targetPos + Vector3.new(offX, offY, offZ)
+
+	if root and root.Parent and root.Parent:FindFirstChild("Humanoid") then
+		local humanoid = root.Parent:FindFirstChild("Humanoid")
+		if humanoid.Sit then
+			VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+			wait()
+			VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+		end
 	end
 
+	local targetPos = getTargetPosition(target)
 	local distance = (root.Position - targetPos).Magnitude
 	local duration = distance / tSpeed
 
@@ -244,10 +242,7 @@ local function tweenToTarget(target, offset)
 
 	tween:Play()
 	isTweening = true
-
-	if offset then
-		root.Anchored = true
-	end
+	root.Anchored = true
 end
 
 local function CancelTween()
@@ -275,8 +270,8 @@ Tweening:AddToggle('TweenToPlayersToggle', {Text = 'Tween To Players', Default =
 while wait(0.5) do
 	if Toggles.TweenToPlayersToggle.Value then
 		SelectedPlayer = Options.PlayersDropdown.Value
-		target = workspace.Characters:FindFirstChild(SelectedPlayer).HumanoidRootPart
-		tweenToTarget(target, true)
+		target = workspace.Characters:FindFirstChild(SelectedPlayer).HumanoidRootPart + CFrame.new(offX, offY, offZ)
+		Tween(target)
 	else
 		CancelTween()
 	end
@@ -289,7 +284,7 @@ while wait(0.5) do
 		if workspace.NPCs:FindFirstChild(SelectedNPC) then
 			SelectedNPC = Options.NPCsDropdown.Value
 			target = workspace.NPCs:FindFirstChild(SelectedNPC).PrimaryPart
-			tweenToTarget(target, false)
+			Tween(target)
 		else
 			CancelTween()
 		end
@@ -303,7 +298,7 @@ while wait(0.5) do
 		SelectedIsland = Options.IslandsDropdown.Value
 		target = IslandCheck[SelectedIsland]
 		print("279: ", SelectedIsland, target)
-		tweenToTarget(target, false)
+		Tween(target)
 	else
 		CancelTween()
 	end
@@ -334,13 +329,13 @@ spawn(function()
 				end
 			end
 			
-			tweenToTarget(Chest, false)
+			Tween(Chest)
 		end
 	end
 end)
 
 local Number = math.random(1, 1000000)
-local function fDist(arg)
+local function Round(arg)
 	return math.floor(tonumber(arg))
 end
 
@@ -368,9 +363,9 @@ spawn(function()
 								ChestText.BackgroundTransparency = 1;
 								ChestText.TextStrokeTransparency = 0.5;
 								ChestText.TextColor3 = Color3.fromRGB(255, 255, 255)
-								ChestText.Text = v.Name .. " \n" .. fDist((plr.Character.CFrame.Position - v.Position).Magnitude) .. " Studs"
+								ChestText.Text = v.Name .. " \n" .. Round((plr.Character.CFrame.Position - v.Position).Magnitude / Meters) .. " M"
 							else
-								v["NameEsp" .. Number].TextLabel.Text = v.Name .. "   \n" .. fDist((plr.Character.CFrame.Position - v.Position).Magnitude) .. " Studs"
+								v["NameEsp" .. Number].TextLabel.Text = v.Name .. "   \n" .. Round((plr.Character.CFrame.Position - v.Position).Magnitude / Meters) .. " M"
 							end
 						end
 					else
@@ -392,7 +387,7 @@ spawn(function()
 			local BerryBushes = CollectionService:GetTagged("BerryBush")
 			local Distance, NearestBush, NearestBerryName
 
-			for _, Bush in ipairs(BerryBushes) do
+			for i, Bush in ipairs(BerryBushes) do
 				for AttributeName, _ in pairs(Bush:GetAttributes()) do
 					local Magnitude = (Bush.Parent:GetPivot().Position - Position).Magnitude
 					if Magnitude < Distance then
@@ -407,19 +402,18 @@ spawn(function()
 				local BushModel = NearestBush.Parent
 				local BushCenter = BushModel:GetPivot().Position
 
-				tweenToTarget(BushCenter, false)
+				Tween(BushCenter)
 
 				local BerryPart = BushModel:FindFirstChild(NearestBerryName)
 				if BerryPart and BerryPart:IsA("BasePart") then
-					tweenToTarget(BerryPart.Position, false)
-
-					VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, true, game)
+					Tween(BerryPart.Position)
+					VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
 					wait(1)
 					VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
 				end
 			else
 				if Toggles.BerryHop.Value then
-					ServerHop()
+					serverHop()
 				end
 			end
 		end
@@ -431,7 +425,7 @@ spawn(function()
 	while wait() do
 		if Toggles.BerryESP.Value then
 		local BerryBushes = CollectionService:GetTagged("BerryBush")
-		for _, Bush in pairs(BerryBushes) do
+		for i, Bush in pairs(BerryBushes) do
 			pcall(function()
 				for AttributeName, Berry in pairs(Bush:GetAttributes()) do
 					if Berry then
@@ -484,7 +478,7 @@ Servers:AddButton({Text = 'Travel to Third Sea', Func = function()
 	CommF_:InvokeServer('TravelZou')
 end})
 
-Servers:AddButton({Text = 'Server Hop', Func = function() ServerHop() end})
+Servers:AddButton({Text = 'Server Hop', Func = function() serverHop() end})
 
 Servers:AddButton({Text = 'Rejoin', Func = function()
 	TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, plr)
@@ -498,7 +492,7 @@ while wait() do
 			while wait() do
 				elapsed = math.floor(tick() - Timer)
 				if elapsed >= (Options.AutoHopTimer.Value * 60) then
-					ServerHop()
+					serverHop()
 					wait(3)
 				end
 			end
@@ -661,13 +655,13 @@ spawn(function() -- start of update
 
 		-- Noclip
 		if Toggles.Noclip.Value then
-			for _, v in pairs(plr.Character:GetDescendants()) do
+			for i, v in pairs(plr.Character:GetDescendants()) do
 				if v:IsA("BasePart") and v.CanCollide == true then
 					v.CanCollide = false
 				end
 			end
 		else
-			for _, v in pairs(plr.Character:GetDescendants()) do
+			for i, v in pairs(plr.Character:GetDescendants()) do
 				if v:IsA('BasePart') and v.CanCollide == false then
 					v.CanCollide = true
 				end
@@ -677,7 +671,7 @@ spawn(function() -- start of update
 
 	if Toggles.InfiniteGeppo.Value then
 		pcall(function()
-			for _, func in next, getgc(true) do
+			for i, func in next, getgc(true) do
 				if type(func) == 'function' and getfenv(func).script == plr.Character:FindFirstChild('Geppo') then
 					for index, upvalue in next, getupvalues(func) do
 						if type(upvalue) == 'number' and upvalue == 0 then
@@ -1250,6 +1244,234 @@ local function CheckLevel()
 	end
 end
 
+local function CheckBossQuest()
+    if FirstSea then
+        if SelectBoss == "The Gorilla King" then
+            BossMon = "The Gorilla King [Lv. 25] [Boss]"
+            NameBoss = 'The Gorrila King'
+            NameQuestBoss = "JungleQuest"
+            QuestLvBoss = 3
+            CFrameQBoss = CFrame.new(-1601, 36, 153)
+            CFrameBoss = CFrame.new(-1088, 8, -488)
+        elseif SelectBoss == "Bobby" then
+            BossMon = "Bobby [Lv. 55] [Boss]"
+            NameBoss = 'Bobby'
+            NameQuestBoss = "BuggyQuest1"
+            QuestLvBoss = 3
+            CFrameQBoss = CFrame.new(-1140, 4, 3827)
+            CFrameBoss = CFrame.new(-1087, 46, 4040)
+        elseif SelectBoss == "The Saw" then
+            BossMon = "The Saw [Lv. 100] [Boss]"
+            NameBoss = 'The Saw'
+            CFrameBoss = CFrame.new(-784, 72, 1603)
+        elseif SelectBoss == "Yeti" then
+            BossMon = "Yeti [Lv. 110] [Boss]"
+            NameBoss = 'Yeti'
+            NameQuestBoss = "SnowQuest"
+            QuestLvBoss = 3
+            CFrameQBoss = CFrame.new(1386, 87, -1298)
+            CFrameBoss = CFrame.new(1218, 138, -1488)
+        elseif SelectBoss == "Mob Leader" then
+            BossMon = "Mob Leader [Lv. 120] [Boss]"
+            NameBoss = 'Mob Leader'
+            CFrameBoss = CFrame.new(-2844, 7, 5356)
+        elseif SelectBoss == "Vice Admiral" then
+            BossMon = "Vice Admiral [Lv. 130] [Boss]"
+            NameBoss = 'Vice Admiral'
+            NameQuestBoss = "MarineQuest2"
+            QuestLvBoss = 2
+            CFrameQBoss = CFrame.new(-5036, 28, 4324)
+            CFrameBoss = CFrame.new(-5006, 88, 4353)
+        elseif SelectBoss == "Saber Expert" then
+            NameBoss = 'Saber Expert'
+            BossMon = "Saber Expert [Lv. 200] [Boss]"
+            CFrameBoss = CFrame.new(-1458, 29, -50)
+        elseif SelectBoss == "Warden" then
+            BossMon = "Warden [Lv. 220] [Boss]"
+            NameBoss = 'Warden'
+            NameQuestBoss = "ImpelQuest"
+            QuestLvBoss = 1
+            CFrameBoss = CFrame.new(5278, 2, 944)
+            CFrameQBoss= CFrame.new(5191, 2, 686)
+        elseif SelectBoss == "Chief Warden" then
+            BossMon = "Chief Warden [Lv. 230] [Boss]"
+            NameBoss = 'Chief Warden'
+            NameQuestBoss = "ImpelQuest"
+            QuestLvBoss = 2
+            CFrameBoss = CFrame.new(5206, 0, 814)
+            CFrameQBoss = CFrame.new(5191, 2, 686)
+        elseif SelectBoss == "Swan" then
+            BossMon = "Swan [Lv. 240] [Boss]"
+            NameBoss = 'Swan'
+            NameQuestBoss = "ImpelQuest"
+            QuestLvBoss = 3
+            CFrameBoss = CFrame.new(5325, 7, 719)
+            CFrameQBoss = CFrame.new(5191, 2, 686)
+        elseif SelectBoss == "Magma Admiral" then
+            BossMon = "Magma Admiral [Lv. 350] [Boss]"
+            NameBoss = 'Magma Admiral'
+            NameQuestBoss = "MagmaQuest"
+            QuestLvBoss = 3
+            CFrameQBoss = CFrame.new(-5314, 12, 8517)
+            CFrameBoss = CFrame.new(-5765, 82, 8718)
+        elseif SelectBoss == "Fishman Lord" then
+            BossMon = "Fishman Lord [Lv. 425] [Boss]"
+            NameBoss = 'Fishman Lord'
+            NameQuestBoss = "FishmanQuest"
+            QuestLvBoss = 3
+            CFrameQBoss = CFrame.new(61122, 18, 1569)
+            CFrameBoss = CFrame.new(61260, 30, 1193)
+        elseif SelectBoss == "Wysper" then
+            BossMon = "Wysper [Lv. 500] [Boss]"
+            NameBoss = 'Wysper'
+            NameQuestBoss = "SkyExp1Quest"
+            QuestLvBoss = 3
+            CFrameQBoss = CFrame.new(-7861, 5545, -379)
+            CFrameBoss = CFrame.new(-7866, 5576, -546)
+        elseif SelectBoss == "Thunder God" then
+            BossMon = "Thunder God [Lv. 575] [Boss]"
+            NameBoss = 'Thunder God'
+            NameQuestBoss = "SkyExp2Quest"
+            QuestLvBoss = 3
+            CFrameQBoss = CFrame.new(-7903, 5635, -1410)
+            CFrameBoss = CFrame.new(-7994, 5761, -2088)
+        elseif SelectBoss == "Cyborg" then
+            BossMon = "Cyborg [Lv. 675] [Boss]"
+            NameBoss = 'Cyborg'
+            NameQuestBoss = "FountainQuest"
+            QuestLvBoss = 3
+            CFrameQBoss = CFrame.new(5258, 38, 4050)
+            CFrameBoss = CFrame.new(6094, 73, 3825)
+        elseif SelectBoss == "Ice Admiral" then
+            BossMon = "Ice Admiral [Lv. 700] [Boss]"
+            NameBoss = 'Ice Admiral'
+            CFrameBoss = CFrame.new(1266, 26, -1399)
+        elseif SelectBoss == "Greybeard" then
+            BossMon = "Greybeard [Lv. 750] [Raid Boss]"
+            NameBoss = 'Greybeard'
+            CFrameBoss = CFrame.new(-5081, 85, 4257)
+        end
+    end
+    if SecondSea then
+        if SelectBoss == "Diamond" then
+            BossMon = "Diamond [Lv. 750] [Boss]"
+            NameBoss = 'Diamond'
+            NameQuestBoss = "Area1Quest"
+            QuestLvBoss = 3
+            CFrameQBoss = CFrame.new(-427, 73, 1835)
+            CFrameBoss = CFrame.new(-1576, 198, 13)
+        elseif SelectBoss == "Jeremy" then
+            BossMon = "Jeremy [Lv. 850] [Boss]"
+            NameBoss = 'Jeremy'
+            NameQuestBoss = "Area2Quest"
+            QuestLvBoss = 3
+            CFrameQBoss = CFrame.new(636, 73, 918)
+            CFrameBoss = CFrame.new(2006, 448, 853)
+        elseif SelectBoss == "Fajita" then
+            BossMon = "Fajita [Lv. 925] [Boss]"
+            NameBoss = 'Fajita'
+            NameQuestBoss = "MarineQuest3"
+            QuestLvBoss = 3
+            CFrameQBoss = CFrame.new(-2441, 73, -3217)
+            CFrameBoss = CFrame.new(-2172, 103, -4015)
+        elseif SelectBoss == "Don Swan" then
+            BossMon = "Don Swan [Lv. 1000] [Boss]"
+            NameBoss = 'Don Swan'
+            CFrameBoss = CFrame.new(2286, 15, 863)
+        elseif SelectBoss == "Smoke Admiral" then
+            BossMon = "Smoke Admiral [Lv. 1150] [Boss]"
+            NameBoss = 'Smoke Admiral'
+            NameQuestBoss = "IceSideQuest"
+            QuestLvBoss = 3
+            CFrameQBoss = CFrame.new(-5429, 15, -5297)
+            CFrameBoss = CFrame.new(-5275, 20, -5260)
+        elseif SelectBoss == "Awakened Ice Admiral" then
+            BossMon = "Awakened Ice Admiral [Lv. 1400] [Boss]"
+            NameBoss = 'Awakened Ice Admiral'
+            NameQuestBoss = "FrostQuest"
+            QuestLvBoss = 3
+            CFrameQBoss = CFrame.new(5668, 28, -6483)
+            CFrameBoss = CFrame.new(6403, 340, -6894)
+        elseif SelectBoss == "Tide Keeper" then
+            BossMon = "Tide Keeper [Lv. 1475] [Boss]"
+            NameBoss = 'Tide Keeper'
+            NameQuestBoss = "ForgottenQuest"
+            QuestLvBoss = 3
+            CFrameQBoss = CFrame.new(-3053, 237, -10145)
+            CFrameBoss = CFrame.new(-3795, 105, -11421)
+        elseif SelectBoss == "Darkbeard" then
+            BossMon = "Darkbeard [Lv. 1000] [Raid Boss]"
+            NameBoss = 'Darkbeard'
+            CFrameMon = CFrame.new(3677, 62, -3144)
+        elseif SelectBoss == "Cursed Captain" then
+            BossMon = "Cursed Captain [Lv. 1325] [Raid Boss]"
+            NameBoss = 'Cursed Captain'
+            CFrameBoss = CFrame.new(916, 181, 33422)
+        elseif SelectBoss == "Order" then
+            BossMon = "Order [Lv. 1250] [Raid Boss]"
+            NameBoss = 'Order'
+            CFrameBoss = CFrame.new(-6217, 28, -5053)
+        end
+    end
+    if ThirdSea then
+        if SelectBoss == "Stone" then
+            BossMon = "Stone [Lv. 1550] [Boss]"
+            NameBoss = 'Stone'
+            NameQuestBoss = "PiratePortQuest"
+            QuestLvBoss = 3
+            CFrameQBoss = CFrame.new(-289, 43, 5579)
+            CFrameBoss = CFrame.new(-1027, 92, 6578)
+        elseif SelectBoss == "Hydra Leader" then
+            BossMon = "Hydra Leader [Lv. 1675] [Boss]"
+            NameBoss = 'Hydra Leader'
+            NameQuestBoss = "VenomCrewQuest"
+            QuestLvBoss = 3
+            CFrameQBoss = CFrame.new(5214, 1003, 759)
+            CFrameBoss = CFrame.new(5887, 1018, -117)
+        elseif SelectBoss == "Kilo Admiral" then
+            BossMon = "Kilo Admiral [Lv. 1750] [Boss]"
+            NameBoss = 'Kilo Admiral'
+            NameQuestBoss = "MarineTreeIsland"
+            QuestLvBoss = 3
+            CFrameQBoss = CFrame.new(2179, 28, -6739)
+            CFrameBoss = CFrame.new(2764, 432, -7144)
+        elseif SelectBoss == "Captain Elephant" then
+            BossMon = "Captain Elephant [Lv. 1875] [Boss]"
+            NameBoss = 'Captain Elephant'
+            NameQuestBoss = "DeepForestIsland"
+            QuestLvBoss = 3
+            CFrameQBoss = CFrame.new(-13232, 332, -7626)
+            CFrameBoss = CFrame.new(-13376, 433, -8071)
+        elseif SelectBoss == "Beautiful Pirate" then
+            BossMon = "Beautiful Pirate [Lv. 1950] [Boss]"
+            NameBoss = 'Beautiful Pirate'
+            NameQuestBoss = "DeepForestIsland2"
+            QuestLvBoss = 3
+            CFrameQBoss = CFrame.new(-12682, 390, -9902)
+            CFrameBoss = CFrame.new(5283, 22, -110)
+        elseif SelectBoss == "Cake Queen" then
+            BossMon = "Cake Queen [Lv. 2175] [Boss]"
+            NameBoss = 'Cake Queen'
+            NameQuestBoss = "IceCreamIslandQuest"
+            QuestLvBoss = 3
+            CFrameQBoss = CFrame.new(-819, 64, -10967)
+            CFrameBoss = CFrame.new(-678, 381, -11114)
+        elseif SelectBoss == "Longma" then
+            BossMon = "Longma [Lv. 2000] [Boss]"
+            NameBoss = 'Longma'
+            CFrameBoss = CFrame.new(-10238, 389, -9549)
+        elseif SelectBoss == "Soul Reaper" then
+            BossMon = "Soul Reaper [Lv. 2100] [Raid Boss]"
+            NameBoss = 'Soul Reaper'
+            CFrameBoss = CFrame.new(-9524, 315, 6655)
+        elseif SelectBoss == "rip_indra True Form" then
+            BossMon = "rip_indra True Form [Lv. 5000] [Raid Boss]"
+            NameBoss = 'rip_indra True Form'
+            CFrameBoss = CFrame.new(-5415, 505, -2814)
+        end
+    end
+end
+
 local AutoFarmSettings = Tabs.AutoFarm:AddLeftGroupbox('Auto Farm Settings')
 
 local WeaponList = {'Melee', 'Blox Fruit', 'Sword', 'Gun'}
@@ -1292,48 +1514,47 @@ Options.Weapon:OnChanged(function()
 	end
 end)
 
--- local sethiddenproperty = sethiddenproperty or (function(...) return ... end)
-local function fBringMob(TargetName, TargetCFrame)
-	for i, v in pairs(workspace.Enemies:GetChildren()) do
-		if v.Name == TargetName then
-			if v:FindFirstChild('Humanoid') and v.Humanoid.Health > 0 then
-				if (v.HumanoidRootPart.Position - plr.Character.HumanoidRootPart.Position).Magnitude < tonumber(BringDis) then
-					v.HumanoidRootPart.CFrame = TargetCFrame
-					v.HumanoidRootPart.Size = Vector3.new(60, 60, 60)
-					v.Humanoid:ChangeState(11)
-					v.Humanoid:ChangeState(14)
-					if v.Humanoid:FindFirstChild('Animator') then
-						v.Humanoid.Animator:Destroy()
-					end
-				end
-			end
-		end
-	end
-end
+-- local function fBringMob(TargetName, TargetCFrame)
+-- 	for i, v in pairs(workspace.Enemies:GetChildren()) do
+-- 		if v.Name == TargetName then
+-- 			if v:FindFirstChild('Humanoid') and v.Humanoid.Health > 0 then
+-- 				if (v.HumanoidRootPart.Position - plr.Character.HumanoidRootPart.Position).Magnitude < tonumber(BringDis) then
+-- 					v.HumanoidRootPart.CFrame = TargetCFrame
+-- 					v.HumanoidRootPart.Size = Vector3.new(60, 60, 60)
+-- 					v.Humanoid:ChangeState(11)
+-- 					v.Humanoid:ChangeState(14)
+-- 					if v.Humanoid:FindFirstChild('Animator') then
+-- 						v.Humanoid.Animator:Destroy()
+-- 					end
+-- 				end
+-- 			end
+-- 		end
+-- 	end
+-- end
 
-AutoFarmSettings:AddToggle('BringMobs', {Text = 'Bring Mobs', Default = false, Callback = function(Value) end})
-spawn(function()
-	while wait(1) do
-		if Toggles.BringMobs.Value and (Toggles.AutoFarmToggle.Value) then
-			pcall(function()
-				fBringMob(Level_Farm_Name, Level_Farm_CFrame)
-			end)
-		elseif Toggles.BringMobs.Value and Toggles.AutoBones.Value then
-			pcall(function()
-				fBringMob(Bone_Farm_Name, Bone_Farm_CFrame)
-			end)
-		elseif Toggles.BringMobs.Value and AutoFarmNearestToggle then
-			pcall(function()
-				fBringMob(Nearest_Farm_Name, Nearest_Farm_CFrame)
-			end)
-		end
-	end
-end)
+-- AutoFarmSettings:AddToggle('BringMobs', {Text = 'Bring Mobs', Default = false, Callback = function(Value) end})
+-- spawn(function()
+-- 	while wait(1) do
+-- 		if Toggles.BringMobs.Value and (Toggles.AutoFarmToggle.Value) then
+-- 			pcall(function()
+-- 				fBringMob(Level_Farm_Name, Level_Farm_CFrame)
+-- 			end)
+-- 		elseif Toggles.BringMobs.Value and Toggles.AutoBones.Value then
+-- 			pcall(function()
+-- 				fBringMob(Bone_Farm_Name, Bone_Farm_CFrame)
+-- 			end)
+-- 		elseif Toggles.BringMobs.Value and AutoFarmNearestToggle then
+-- 			pcall(function()
+-- 				fBringMob(Nearest_Farm_Name, Nearest_Farm_CFrame)
+-- 			end)
+-- 		end
+-- 	end
+-- end)
 
-AutoFarmSettings:AddSlider('BringRange', {Text = 'Bring Mobs Range', Default = 250, Min = 0, Max = 500, Rounding = 0, Compact = false,Callback = function(Value) end})
-Options.BringRange:OnChanged(function()
-	BringDis = Options.BringRange.Value
-end)
+-- AutoFarmSettings:AddSlider('BringRange', {Text = 'Bring Mobs Range', Default = 250, Min = 0, Max = 500, Rounding = 0, Compact = false,Callback = function(Value) end})
+-- Options.BringRange:OnChanged(function()
+-- 	BringDis = Options.BringRange.Value
+-- end)
 
 local function EquipTool(Tool)
 	plr.Character.Humanoid:EquipTool(plr.Backpack[Tool])
@@ -1349,13 +1570,13 @@ end
 local AutoFarm = Tabs.AutoFarm:AddLeftGroupbox('Auto Farm')
 AutoFarm:AddToggle('AutoFarmToggle', {Text = 'Auto Farm', Default = false, Callback = function(Value) end})
 spawn(function()
-	while wait(0.2) do
+	while wait(0.1) do
 		if Toggles.AutoFarmToggle.Value then
 			pcall(function()
 				CheckLevel()
 				if not string.find(plr.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text, NameMon) or plr.PlayerGui.Main.Quest.Visible == false then
 					CommF_:InvokeServer("AbandonQuest")
-					tweenToTarget(CFrameQuest)
+					Tween(CFrameQuest)
 					if (CFrameQuest.Position - plr.Character.HumanoidRootPart.Position).Magnitude <= 5 then
 						wait(0.5)
 						CommF_:InvokeServer("StartQuest", NameQuest, QuestLv)
@@ -1367,17 +1588,15 @@ spawn(function()
 								if v.Name == EnemyName then
 									repeat wait()
 										EquipTool(SelectWeapon)
-										tweenToTarget(v.HumanoidRootPart.CFrame)
-										v.HumanoidRootPart.Size = Vector3.new(60,60,60)
-										Level_Farm_Name = v.Name
-										Level_Farm_CFrame = v.HumanoidRootPart.CFrame
+										target = v.HumanoidRootPart + Vector3.new(offX, offY, offZ)
+										Tween(target)
 										AutoClick()
 									until not Toggles.AutoFarmToggle.Value or not v.Parent or v.Humanoid.Health <= 0 or not workspace.Enemies:FindFirstChild(v.Name) or plr.PlayerGui.Main.Quest.Visible == false
 								end
 							end
 						end
 					else
-						tweenToTarget(CFrameMonster)
+						Tween(CFrameMonster)
 					end
 				end
 			end)
@@ -1387,7 +1606,7 @@ end)
 
 AutoFarm:AddToggle('AutoFarmNoQuest', {Text = 'Auto Farm No Quest', Default = false, Callback = function(Value) end})
 spawn(function()
-    while wait() do
+    while wait(0.1) do
         if Toggles.AutoFarmNoQuest.Value then
             pcall(function()
                 CheckLevel()
@@ -1397,12 +1616,8 @@ spawn(function()
                             if v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") and v.Humanoid.Health > 0 then
                                 repeat wait()
                                     EquipTool(SelectWeapon)
-                                    Tween(v.HumanoidRootPart.CFrame * Farm_Mode)
-                                    v.HumanoidRootPart.CanCollide = false
-                                    v.HumanoidRootPart.Size = Vector3.new(60,60,60)
-                                    v.HumanoidRootPart.Transparency = 1
-                                    Level_Farm_Name = v.Name
-                                    Level_Farm_CFrame = v.HumanoidRootPart.CFrame
+									target = v.HumanoidRootPart + Vector3.new(offX, offY, offZ)
+                                    Tween(target)
                                     AutoClick()
                                 until not Toggles.AutoFarmNoQuest.Value or not v.Parent or v.Humanoid.Health <= 0 or not workspace.Enemies:FindFirstChild(v.Name)
                             end
@@ -1421,14 +1636,13 @@ spawn(function()
 	while wait(0.1) do
 		if Toggles.AutoFarmNearestToggle.Value then
 			pcall(function()
-				for i,v in pairs (workspace.Enemies:GetChildren()) do
+				for i, v in pairs (workspace.Enemies:GetChildren()) do
 					if v:FindFirstChild('Humanoid') and v:FindFirstChild('HumanoidRootPart') and v.Humanoid.Health > 0 then
 						if (plr.Character.HumanoidRootPart.Position - v.HumanoidRootPart.Position).Magnitude <= 1000 then
 							repeat wait()
 								EquipTool(SelectedWeapon)
-								tweenToTarget(v.HumanoidRootPart.CFrame)
-								Nearest_Farm_Name = v.Name
-								Nearest_Farm_CFrame = v.HumanoidRootPart.CFrame
+								target = v.HumanoidRootPart + Vector3.new(offX, offY, offZ)
+								Tween(target)
 								AutoClick()
 							until not Toggles.AutoFarmNearestToggle.Value or not v.Parent or v.Humanoid.Health <= 0 or not workspace.Enemies:FindFirstChild(v.Name)
 						end
@@ -1439,61 +1653,97 @@ spawn(function()
 	end
 end)
 
-GroupBox_ThirdSea:AddToggle('AutoEletric', {Text = '(BETA) Auto Unlock Eletric Claw', Default = false, Callback = function(Value) end})
-spawn(function()
-	while wait() do
-		if Toggles.AutoEletric.Value then
-			target = ReplicatedStorage.NPCs:FindFirstChild('Previous Hero').HumanoidRootPart
-			tweenToTarget(target, false)
-			if getRoot() and (getRoot().Position - target.HumanoidRootPart.Position).Magnitude <= 10 then
-				-- CommF_:InvokeServer("idk") TODO TODO TODO, can someone contribute with the invoke server for ts?
-				wait(5)
-				tweenToTarget(CFrame.new(-12553, 332, -7621))
-			end
-		end
-	end
+local BossNameStorage = {
+    "The Gorrila King", "Bobby", "The Saw", "Yeti", "Mob Leader", "Vice Admiral", "Saber Expert", "Warden", "Chief Warden", "Swan", "Magma Admiral", "Fishman Lord", "Wysper", "Thunder God", "Cyborg", "Ice Admiral", "Greybeard",
+    "Diamond", "Jeremy", "Fajita", "Don Swan", "Smoke Admiral", "Awakened Ice Admiral", "Tide Keeper", "Darkbeard", "Cursed Captain", "Order",
+    "Stone", "Hydra Leader", "Kilo Admiral", "Captain Elephant", "Beautiful Pirate", "Cake Queen", "Longma", "Soul Reaper", "rip_indra True Form"
+}
+local BossList = {}
+for i, v in pairs(ReplicatedStorage:GetChildren()) do
+    if table.find(BossNameStorage, v.Name) then
+        table.insert(BossList, v.Name)
+    end
+end
+
+AutoFarm:AddDropdown('SelectBoss', {Values = BossList, Default = 1, Multi = false, Text = 'Select Boss', Callback = function(Value) end})
+Options.SelectBoss:OnChanged(function()
+	SelectBoss = Options.SelectBoss.Value
 end)
 
-GroupbBox_ThirdSea:AddToggle('AutoBones', {Text = 'Auto Farm Bones', Default = false, Callback = function(Value) end})
+AutoFarm:AddToggle('AutoFarmBossQuest', {Text = 'Auto Farm Boss Quest', Default = false, Callback = function(Value) end})
 spawn(function()
-	while wait(0.1) do
-		if Toggles.AutoBones.Value then
-			pcall(function()
-				tweenToTarget(CFrame.new(-9508, 142, 5737))
-				for i, v in pairs(workspace.Enemies:GetChildren()) do
-					if v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") and v.Humanoid.Health > 0 then
-						if v.Name == "Reborn Skeleton" or v.Name == "Living Zombie" or v.Name =="Demonic Soul" or v.Name == "Posessed Mummy" then
-							repeat wait()
-								EquipTool(SelectWeapon)
-								tweenToTarget(v.HumanoidRootPart.CFrame, true)
-								v.HumanoidRootPart.Size = Vector3.new(60,60,60)
-								Bone_Farm_Name = v.Name
-								Bone_Farm_CFrame = v.HumanoidRootPart.CFrame
-								AutoClick()
-							until not Toggles.AutoBones.Value or not v.Parent or v.Humanoid.Health <= 0 or not game.Workspace.Enemies:FindFirstChild(v.Name)
-						end
-					end
-				end
-
-				for i, v in pairs(ReplicatedStorage:GetChildren()) do
-					if v.Name == "Reborn Skeleton" then
-						tweenToTarget(v.HumanoidRootPart.CFrame, true)
-					elseif v.Name == "Living Zombie" then
-						tweenToTarget(v.HumanoidRootPart.CFrame, true)
-					elseif v.Name == "Demonic Soul" then
-						tweenToTarget(v.HumanoidRootPart.CFrame, true)
-					elseif v.Name == "Posessed Mummy" then
-						tweenToTarget(v.HumanoidRootPart.CFrame, true)
-					end
-				end
-			end)
-		end
-	end
+    while wait(0.1) do
+        if Toggles.AutoFarmBossQuest.Value then
+            pcall(function()
+                CheckBossQuest(SelectBoss)
+                if not string.find(plr.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text, NameBoss) or plr.PlayerGui.Main.Quest.Visible == false then
+                    CommF_:InvokeServer("AbandonQuest")
+                    Tween(CFrameQBoss)
+                    if (CFrameQBoss.Position - plr.Character.HumanoidRootPart.Position).Magnitude <= 5 then
+                        CommF_:InvokeServer("StartQuest", NameQuestBoss, QuestLvBoss)
+                    end
+                elseif string.find(plr.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text, NameBoss) or plr.PlayerGui.Main.Quest.Visible == true then
+                    if workspace.Enemies:FindFirstChild(SelectBoss) then
+                        for i,v in pairs(workspace.Enemies:GetChildren()) do
+                            if v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") and v.Humanoid.Health > 0 then
+                                if v.Name == SelectBoss then
+                                    repeat wait()
+                                        EquipTool(SelectWeapon)
+                                        Tween(v.HumanoidRootPart.CFrame)
+                                        v.Humanoid:ChangeState(11)
+                                        v.Humanoid:ChangeState(14)
+                                        AutoClick()
+                                    until not Toggles.AutoFarmBossQuest.Value or not v.Parent or v.Humanoid.Health <= 0 or not workspace.Enemies:FindFirstChild(v.Name) or plr.PlayerGui.Main.Quest.Visible == false
+                                end
+                            end
+                        end
+                    else
+                        Tween(CFrameBoss)
+                    end
+                end
+            end)
+        end
+    end
 end)
 
-local GroupBox_FirstSea = Tabs.AutoFarm:AddLeftGroupbox('First Sea')
+AutoFarm:AddToggle('AutoFactory', {Text = 'Auto Factory', Default = false, Callback = function(Value) end})
+spawn(function()
+    while wait() do
+        if AutoFarmBossNoQuest then
+            pcall(function()
+                CheckBossQuest(SelectBoss)
+                if ByPassTP then
+                    BTP(CFrameBoss)
+                elseif not ByPassTP then
+                    Tween(CFrameBoss)
+                end
+                for i,v in pairs(game:GetService("Workspace").Enemies:GetChildren()) do
+                    if v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") and v.Humanoid.Health > 0 then
+                        if v.Name == SelectBoss then
+                            repeat game:GetService("RunService").Heartbeat:wait()
+                                EquipTool(SelectWeapon)
+                                Tween(v.HumanoidRootPart.CFrame * Farm_Mode)
+                                v.HumanoidRootPart.CanCollide = false
+                                v.HumanoidRootPart.Size = Vector3.new(60,60,60)
+                                v.HumanoidRootPart.Transparency = 1
+                                v.Humanoid:ChangeState(11)
+                                v.Humanoid:ChangeState(14)
+                                AutoClick()
+                            until not AutoFarmBossNoQuest or not v.Parent or v.Humanoid.Health <= 0 or not game:GetService("Workspace").Enemies:FindFirstChild(v.Name)
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
 
-local GroupBox_SecondSea = Tabs.AutoFarm:AddLeftGroupbox('Second Sea')
+-- Start of First Sea GroupBox
+local GroupBox_FirstSea = Tabs.AutoFarm:AddRightGroupbox('First Sea')
+-- End of First Sea GroupBox
+
+-- Start of Second Sea GroupBox
+local GroupBox_SecondSea = Tabs.AutoFarm:AddRightGroupbox('Second Sea')
 GroupBox_SecondSea:AddToggle('AutoLegendarySword', {Text = 'Auto Legendary Sword', Default = false, Callback = function(Value) end})
 spawn(function()
     while wait() do
@@ -1505,7 +1755,7 @@ spawn(function()
     end
 end)
 
-local Core = 448, 199, -441
+local Core = CFrame.new(448, 199, -441)
 GroupBox_SecondSea:AddToggle('AutoFactory', {Text = 'Auto Factory', Default = false, Callback = function(Value) end})
 spawn(function()
 	while wait() do
@@ -1514,43 +1764,91 @@ spawn(function()
 				for i, v in pairs(game.Workspace.Enemies:GetChildren()) do
 					if v.Name == "Core" and v.Humanoid.Health > 0 then
 						repeat wait()
-							tweenToTarget(CFrame.new(Core))
+							Tween(Core)
 							EquipTool(SelectWeapon)
 							AutoClick()
 						until not v.Parent or v.Humanoid.Health <= 0  or Toggles.AutoFactory.Value == false
 					end
 				end
 			elseif ReplicatedStorage:FindFirstChild("Core") then
-				repeat tweenToTarget(CFrame.new(Core))
+				repeat Tween(Core)
 					wait()
-				until not Toggles.AutoFactory.Value or (plr.Character.HumanoidRootPart.Position-Vector3.new(Core)).Magnitude <= 10
+				until not Toggles.AutoFactory.Value or (plr.Character.HumanoidRootPart.Position - Vector3.new(Core)).Magnitude <= 10
+			end
+		end
+	end
+end)
+-- End of Second Sea GroupBox
+
+-- Start of Third Sea GroupBox
+local GroupBox_ThirdSea = Tabs.AutoFarm:AddRightGroupbox('Third Sea')
+GroupBox_ThirdSea:AddToggle('AutoEletric', {Text = '(BETA) Auto Unlock Eletric Claw', Default = false, Callback = function(Value) end})
+spawn(function()
+	while wait() do
+		if Toggles.AutoEletric.Value then
+			target = ReplicatedStorage.NPCs:FindFirstChild('Previous Hero').HumanoidRootPart
+			Tween(target)
+			if getRoot() and (getRoot().Position - target.HumanoidRootPart.Position).Magnitude <= 10 then
+				-- CommF_:InvokeServer("idk") TODO TODO TODO, can someone contribute with the invoke server for ts?
+				wait(5)
+				Tween(CFrame.new(-12553, 332, -7621))
 			end
 		end
 	end
 end)
 
-local GroupbBox_ThirdSea = Tabs.AutoFarm:AddLeftGroupbox('Third Sea')
-GroupBox_SecondSea:AddToggle('AutoPirateRaid', {Text = 'Auto Pirate Raid', Default = false, Callback = function(Value) end})
+GroupBox_ThirdSea:AddToggle('AutoBones', {Text = 'Auto Farm Bones', Default = false, Callback = function(Value) end})
+spawn(function()
+	while wait(0.1) do
+		if Toggles.AutoBones.Value then
+			pcall(function()
+				Tween(CFrame.new(-9508, 142, 5737))
+				for i, v in pairs(workspace.Enemies:GetChildren()) do
+					if v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") and v.Humanoid.Health > 0 then
+						if v.Name == "Reborn Skeleton" or v.Name == "Living Zombie" or v.Name =="Demonic Soul" or v.Name == "Posessed Mummy" then
+							repeat wait()
+								EquipTool(SelectWeapon)
+								target = v.HumanoidRootPart + Vector3.new(offX, offY, offZ)
+								Tween(target)
+								AutoClick()
+							until not Toggles.AutoBones.Value or not v.Parent or v.Humanoid.Health <= 0 or not game.Workspace.Enemies:FindFirstChild(v.Name)
+						end
+					end
+				end
+
+				for i, v in pairs(ReplicatedStorage:GetChildren()) do
+					if v.Name == "Reborn Skeleton" then
+						Tween(v.HumanoidRootPart.CFrame)
+					elseif v.Name == "Living Zombie" then
+						Tween(v.HumanoidRootPart.CFrame)
+					elseif v.Name == "Demonic Soul" then
+						Tween(v.HumanoidRootPart.CFrame)
+					elseif v.Name == "Posessed Mummy" then
+						Tween(v.HumanoidRootPart.CFrame)
+					end
+				end
+			end)
+		end
+	end
+end)
+
+GroupBox_ThirdSea:AddToggle('AutoPirateRaid', {Text = 'Auto Pirate Raid', Default = false, Callback = function(Value) end })
 spawn(function()
 	while wait() do
 		if Toggles.AutoPirateRaid.Value then
 			pcall(function()
 				local CFrameCastleRaid = CFrame.new(-5496, 313, -2841)
-				if CFrameCastleRaid.Position - plr.Character.HumanoidRootPart.Position).Magnitude <= 500 then
+				if (CFrameCastleRaid.Position - plr.Character.HumanoidRootPart.Position).Magnitude <= 500 then
 					for i, v in pairs(workspace.Enemies:GetChildren()) do
 						if v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
 							if v.Name then
 								if (v.HumanoidRootPart.Position - plr.Character.HumanoidRootPart.Position).Magnitude < 2000 then
 									repeat wait()
 										EquipTool(SelectWeapon)
-										tweenToTarget(v.HumanoidRootPart, true)
-										v.HumanoidRootPart.CanCollide = false
-										v.HumanoidRootPart.Size = Vector3.new(60,60,60)
-										v.HumanoidRootPart.Transparency = 1
+										target = v.HumanoidRootPart + Vector3.new(offX, offY, offZ)
+										Tween(target)
 										v.Humanoid:ChangeState(11)
 										v.Humanoid:ChangeState(14)
-										PirateCastle_Name = v.Name
-										PirateCastle_CFrame = v.HumanoidRootPart.CFrame
 										AutoClick()
 									until not Toggles.AutoPirateRaid.Value or not v.Parent or v.Humanoid.Health <= 0 or not workspace.Enemies:FindFirstChild(v.Name)
 								end
@@ -1558,12 +1856,55 @@ spawn(function()
 						end
 					end
 				else
-					tweenToTarget(CFrameCastleRaid, false)
+					Tween(CFrameCastleRaid)
 				end
 			end)
 		end
 	end
-end
+end)
+
+GroupBox_ThirdSea:AddToggle('AutoEliteHunter', {Text = 'Auto Elite Hunter', Default = false, Callback = function(Value) end})
+spawn(function()
+    while wait() do
+        if Toggles.AutoEliteHunter.Value then
+            pcall(function()
+                local progelit = CommF_:InvokeServer("EliteHunter", "Progress")
+                EliteProgress:Refresh("Elite Boss Killed : " .. progelit)
+                if plr.PlayerGui.Main.Quest.Visible == true then
+                    if string.find(plr.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text, "Diablo") or string.find(plr.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text,"Deandre") or string.find(plr.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text, "Urban") then
+                        if workspace.Enemies:FindFirstChild("Diablo") or workspace.Enemies:FindFirstChild("Deandre") or workspace.Enemies:FindFirstChild("Urban") then
+                            for i, v in pairs(workspace.Enemies:GetChildren()) do
+                                if v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") and v.Humanoid.Health > 0 then
+                                    if v.Name == "Diablo" or v.Name == "Deandre" or v.Name == "Urban" then
+                                        repeat wait()
+                                            EquipTool(SelectWeapon)
+											target = v.HumanoidRootPart + Vector3.new(offX, offY, offZ)
+                                            Tween(target)
+                                            v.Humanoid:ChangeState(11)
+                                            v.Humanoid:ChangeState(14)
+                                            AutoClick()
+                                        until Toggles.AutoEliteHunter.Value == false or v.Humanoid.Health <= 0 or not v.Parent
+                                    end
+                                end
+                            end
+                        else
+                            if ReplicatedStorage:FindFirstChild("Diablo") then
+                                Tween(ReplicatedStorage:FindFirstChild("Diablo").HumanoidRootPart)
+                            elseif ReplicatedStorage:FindFirstChild("Deandre") then
+                                Tween(ReplicatedStorage:FindFirstChild("Deandre").HumanoidRootPart)
+                            elseif ReplicatedStorage:FindFirstChild("Urban") then
+                                Tween(ReplicatedStorage:FindFirstChild("Urban").HumanoidRootPart)
+                            end
+                        end
+                    end
+                else
+                    CommF_:InvokeServer("EliteHunter")
+                end
+            end)
+        end
+    end
+end)
+-- End of Third Sea GroupBox
 
 -- Fruits Tab
 local Fruits = Tabs.Fruits:AddLeftGroupbox('Fruits')
@@ -1590,9 +1931,9 @@ while wait() do
 						FruitText.BackgroundTransparency = 1;
 						FruitText.TextStrokeTransparency = 0.5;
 						FruitText.TextColor3 = Color3.fromRGB(255, 0, 0)
-						FruitText.Text = v.Name .. " \n" .. fDist((plr.Character.Head.Position - v.Handle.Position).Magnitude / 3) .. " M"
+						FruitText.Text = v.Name .. " \n" .. Round((plr.Character.Head.Position - v.Handle.Position).Magnitude / Meters) .. " M"
 					else
-						v.Handle["NameEsp" .. Number].TextLabel.Text = v.Name .. "   \n" .. fDist((plr.Character.CFrame.Position - v.Handle.Position).Magnitude) .. " Studs"
+						v.Handle["NameEsp" .. Number].TextLabel.Text = v.Name .. "   \n" .. Round((plr.Character.CFrame.Position - v.Handle.Position).Magnitude / Meters) .. " M"
 					end
 				end
 			else
@@ -1627,11 +1968,7 @@ spawn(function()
 			end)
 	
 			if Fruit then
-				local root = plr.Character:FindFirstChild('HumanoidRootPart')
-				local info = TweenInfo.new(((Fruit.Position - root.Position).Magnitude - 150) / tSpeed)
-				local t = TweenService:Create(root, info, {CFrame = Fruit})
-				t:Play()
-				t.Completed:Wait()
+				Tween(Fruit)
 			end
 		end
 	end
@@ -1650,7 +1987,7 @@ Fruits:AddToggle('FruitNotify', {Text = 'Fruit Spawn Notify', Default = true, Ca
 spawn(function()
 	while wait(1) do
 		if Toggles.FruitNotify.Value then
-			for _, v in workspace:GetChildren() do
+			for i, v in workspace:GetChildren() do
 				print('1654: ', v)
 				if v.Name:find('Fruit') and v:IsA('Tool') then
 					StarterGui:SetCore('SendNotification', {
@@ -1905,7 +2242,7 @@ Tab2:AddButton('Enable All', function()
 		'FriendlyTracerOutline', 'FriendlyOffScreenArrow', 'FriendlyOffScreenArrowOutline',
 		'FriendlyChams', 'FriendlyChamsVisibleOnly'
 	}
-	for _, v in pairs(togglesToEnable) do
+	for i, v in pairs(togglesToEnable) do
 		if Toggles[v] then
 			Toggles[v]:SetValue(true)
 		end
@@ -1938,7 +2275,7 @@ local enemyColorOptions = {
 	{ label = 'Enemy Chams Fill Color', key = 'EnemyChamsFillColor', default = Color3.new(0, 0, 0) },
 	{ label = 'Enemy Chams Outline Color', key = 'EnemyChamsOutlineColor', default = Color3.new(1, 0, 0) },
 }
-for _, opt in ipairs(enemyColorOptions) do
+for i, opt in ipairs(enemyColorOptions) do
 	Tab3:AddLabel(opt.label):AddColorPicker(opt.key, { Default = opt.default, Callback = function(Value) end })
 end
 
@@ -1967,7 +2304,7 @@ local friendlyColorOptions = {
 	{ label = 'Friendly Chams Outline Color', key = 'FriendlyChamsOutlineColor', default = Color3.new(0, 1, 0) },
 }
 
-for _, opt in ipairs(friendlyColorOptions) do
+for i, opt in ipairs(friendlyColorOptions) do
 	Tab4:AddLabel(opt.label):AddColorPicker(opt.key, { Default = opt.default, Callback = function(Value) end })
 end
 
