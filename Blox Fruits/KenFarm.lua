@@ -17,7 +17,7 @@ if plr.PlayerGui:FindFirstChild("Main (minimal)") and plr.PlayerGui['Main (minim
 end
 
 local function GetRoot()
-	local rootPart = plr.Character:FindFirstChild('HumanoidRootPart')
+	local rootPart = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
 	return rootPart
 end
 
@@ -50,7 +50,7 @@ local function Tween(target)
 	end
 
 	local targetPos = Convert(target)
-	local distance = (root.CFrame.Position - targetPos).Magnitude
+	local distance = (root.Position - targetPos).Magnitude
 	local duration = distance / 350
 
 	local info = TweenInfo.new(duration, Enum.EasingStyle.Linear)
