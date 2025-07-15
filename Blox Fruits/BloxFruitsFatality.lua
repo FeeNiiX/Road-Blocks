@@ -27,8 +27,9 @@ local Meters = 100 / 28
 --[[
 Give Up ✌️✊
 Bring back all OnChanged things
+Skid More
+Add the linoria lib thing without the cursor to the repo again
 Fix Island Tween
-Fix BerryESP
 Fix AutoBerry
 Find out what makes the player starts sliding of steep angles and camera gets a little quirk (localplayer tab 100%)
 
