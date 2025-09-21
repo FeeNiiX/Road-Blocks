@@ -1,5 +1,7 @@
 local TeleportService = game:GetService("TeleportService")
+local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
+local RS = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
 local PlaceId = game.PlaceId
@@ -9,6 +11,18 @@ local plr = Players.LocalPlayer
 local startTime = tick()
 local duration = 30 * 60
 local Hopping = true
+
+local AncientMonk = RS:FindFirstChild("NPCs") and RS.NPCs:FindFirstChild("Ancient Monk") or workspace:FindFirstChild("Ancient Monk")
+local PreviousHero = RS:FindFirstChild("NPCs") and RS.NPCs:FindFirstChild("Previous Hero") or workspace:FindFirstChild("Previous Hero")
+local Trevor = RS:FindFirstChild("NPCs") and RS.NPCs:FindFirstChild("Trevor") or workspace:FindFirstChild("Trevor")
+
+local function tweenToTarget(target)
+	local distance = (target.PrimaryPart.Position - plr.PrimaryPart.Position).Magnitude
+	local time = distance / 350
+	local info = TweenInfo.new(time, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+	local tween = TweenService:Create(plr.PrimaryPart, info, {CFrame = CFrame.new(target.PrimaryPart.Position)})
+	tween:Play()
+end
 
 local function serverHop()
 	local servers = {}
@@ -29,60 +43,143 @@ local function serverHop()
 end
 
 local ScreenGui = Instance.new("ScreenGui")
+local Container = Instance.new("Frame")
 local TimeLabel = Instance.new("TextLabel")
+local ButtonsFrame = Instance.new("Frame")
 local Hop = Instance.new("TextButton")
 local Toggle = Instance.new("TextButton")
+local ControlsFrame = Instance.new("Frame")
 local IncreaseButton = Instance.new("TextButton")
 local DecreaseButton = Instance.new("TextButton")
+local UIListLayout = Instance.new("UIListLayout")
+local ExtraButtonsFrame = Instance.new("Frame")
+local AncientMonkButton = Instance.new("TextButton")
+local PreviousHeroButton = Instance.new("TextButton")
+local TrevorButton = Instance.new("TextButton")
 
-ScreenGui.Parent = game.CoreGui
-TimeLabel.Parent = ScreenGui
-TimeLabel.Size = UDim2.new(0, 200, 0, 50)
-TimeLabel.Position = UDim2.new(0, 10, 0, 10)
+ScreenGui.Parent = Players.LocalPlayer.PlayerGui
+
+Container.Name = "Container"
+Container.Parent = ScreenGui
+Container.AnchorPoint = Vector2.new(1, 0)
+Container.Position = UDim2.new(1, 0, 0, 0)
+Container.Size = UDim2.new(0.2, 0, 0, 90)
+Container.BackgroundTransparency = 1
+
+UIListLayout.Parent = Container
+UIListLayout.FillDirection = Enum.FillDirection.Vertical
+UIListLayout.Padding = UDim.new(0, 0)
+UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+
+TimeLabel.Name = "TimeLabel"
+TimeLabel.Parent = Container
+TimeLabel.Size = UDim2.new(1, 0, 0, 28)
 TimeLabel.BackgroundTransparency = 0.5
 TimeLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 TimeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 TimeLabel.Font = Enum.Font.SourceSans
-TimeLabel.TextSize = 24
+TimeLabel.TextScaled = true
 TimeLabel.Text = "Time: 0s"
 
-Hop.Parent = ScreenGui
-Hop.Size = UDim2.new(0, 99, 0, 25)
-Hop.Position = UDim2.new(0, 10, 0, 62)
+ButtonsFrame.Name = "ButtonsFrame"
+ButtonsFrame.Parent = Container
+ButtonsFrame.Size = UDim2.new(1, 0, 0, 28)
+ButtonsFrame.BackgroundTransparency = 1
+
+Hop.Name = "Hop"
+Hop.Parent = ButtonsFrame
+Hop.AnchorPoint = Vector2.new(1, 0)
+Hop.Position = UDim2.new(1, 0, 0, 0)
+Hop.Size = UDim2.new(0.5, 0, 1, 0)
 Hop.BackgroundTransparency = 0.5
 Hop.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 Hop.TextColor3 = Color3.fromRGB(255, 255, 255)
 Hop.Font = Enum.Font.SourceSans
-Hop.TextSize = 22
+Hop.TextScaled = true
 Hop.Text = "Hop Now"
 
-Toggle.Parent = ScreenGui
-Toggle.Size = UDim2.new(0, 99, 0, 25)
-Toggle.Position = UDim2.new(0, 111, 0, 62)
+Toggle.Name = "Toggle"
+Toggle.Parent = ButtonsFrame
+Toggle.AnchorPoint = Vector2.new(1, 0)
+Toggle.Position = UDim2.new(0.5, 0, 0, 0)
+Toggle.Size = UDim2.new(0.5, 0, 1, 0)
 Toggle.BackgroundTransparency = 0.5
 Toggle.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 Toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 Toggle.Font = Enum.Font.SourceSans
-Toggle.TextSize = 22
+Toggle.TextScaled = true
 Toggle.Text = "Toggle: ON"
 
-IncreaseButton.Parent = ScreenGui
-IncreaseButton.Size = UDim2.new(0, 40, 0, 36)
-IncreaseButton.Position = UDim2.new(0, 215, 0, 10)
+ControlsFrame.Name = "ControlsFrame"
+ControlsFrame.Parent = Container
+ControlsFrame.Size = UDim2.new(1, 0, 0, 28)
+ControlsFrame.BackgroundTransparency = 1
+
+IncreaseButton.Name = "IncreaseButton"
+IncreaseButton.Parent = ControlsFrame
+IncreaseButton.AnchorPoint = Vector2.new(1, 0)
+IncreaseButton.Position = UDim2.new(1, 0, 0, 0)
+IncreaseButton.Size = UDim2.new(0.5, 0, 1, 0)
+IncreaseButton.BackgroundTransparency = 0.5
 IncreaseButton.BackgroundColor3 = Color3.fromRGB(40, 180, 40)
 IncreaseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 IncreaseButton.Font = Enum.Font.SourceSans
-IncreaseButton.TextSize = 28
+IncreaseButton.TextScaled = true
 IncreaseButton.Text = "+"
 
-DecreaseButton.Parent = ScreenGui
-DecreaseButton.Size = UDim2.new(0, 40, 0, 36)
-DecreaseButton.Position = UDim2.new(0, 215, 0, 50)
+DecreaseButton.Name = "DecreaseButton"
+DecreaseButton.Parent = ControlsFrame
+DecreaseButton.AnchorPoint = Vector2.new(1, 0)
+DecreaseButton.Position = UDim2.new(0.5, 0, 0, 0)
+DecreaseButton.Size = UDim2.new(0.5, 0, 1, 0)
+DecreaseButton.BackgroundTransparency = 0.5
 DecreaseButton.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
 DecreaseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 DecreaseButton.Font = Enum.Font.SourceSans
-DecreaseButton.TextSize = 28
+DecreaseButton.TextScaled = true
 DecreaseButton.Text = "-"
+
+-- Extra buttons area (placed after ControlsFrame by UIList)
+ExtraButtonsFrame.Name = "ExtraButtonsFrame"
+ExtraButtonsFrame.Parent = Container
+ExtraButtonsFrame.Size = UDim2.new(1, 0, 0, 28)
+ExtraButtonsFrame.BackgroundTransparency = 1
+
+AncientMonkButton.Name = "TargetAButton"
+AncientMonkButton.Parent = ExtraButtonsFrame
+AncientMonkButton.AnchorPoint = Vector2.new(1, 0)
+AncientMonkButton.Position = UDim2.new(0.333, 0, 0, 0)
+AncientMonkButton.Size = UDim2.new(0.333, 0, 1, 0)
+AncientMonkButton.BackgroundTransparency = 0.5
+AncientMonkButton.BackgroundColor3 = Color3.fromRGB(60, 120, 220)
+AncientMonkButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+AncientMonkButton.Font = Enum.Font.SourceSans
+AncientMonkButton.TextScaled = true
+AncientMonkButton.Text = "TP To Ancient Monk"
+
+PreviousHeroButton.Name = "TargetBButton"
+PreviousHeroButton.Parent = ExtraButtonsFrame
+PreviousHeroButton.AnchorPoint = Vector2.new(1, 0)
+PreviousHeroButton.Position = UDim2.new(0.667, 0, 0, 0)
+PreviousHeroButton.Size = UDim2.new(0.333, 0, 1, 0)
+PreviousHeroButton.BackgroundTransparency = 0.5
+PreviousHeroButton.BackgroundColor3 = Color3.fromRGB(120, 60, 220)
+PreviousHeroButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+PreviousHeroButton.Font = Enum.Font.SourceSans
+PreviousHeroButton.TextScaled = true
+PreviousHeroButton.Text = "TP To Previous Hero"
+
+TrevorButton.Name = "TargetBButton"
+TrevorButton.Parent = ExtraButtonsFrame
+TrevorButton.AnchorPoint = Vector2.new(1, 0)
+TrevorButton.Position = UDim2.new(1, 0, 0, 0)
+TrevorButton.Size = UDim2.new(0.333, 0, 1, 0)
+TrevorButton.BackgroundTransparency = 0.5
+TrevorButton.BackgroundColor3 = Color3.fromRGB(250, 250, 100)
+TrevorButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+TrevorButton.Font = Enum.Font.SourceSans
+TrevorButton.TextScaled = true
+TrevorButton.Text = "TP To Trevor"
 
 Toggle.MouseButton1Click:Connect(function()
 	if Toggle.Text == "Toggle: ON" then
@@ -106,14 +203,38 @@ DecreaseButton.MouseButton1Click:Connect(function()
 	duration = math.max(0, duration - 60)
 end)
 
-spawn(function()
-	while wait() do
-		local elapsed = math.floor(tick() - startTime)
-		TimeLabel.Text = "Time: " .. elapsed .. "/ " .. duration .. "s"
-
-		if Hopping and elapsed >= duration then
-			serverHop()
-			wait(3)
-		end
+-- Connect extra target buttons to call tweenToTarget with safety checks
+AncientMonkButton.MouseButton1Click:Connect(function()
+	if AncientMonk then
+		pcall(function() tweenToTarget(AncientMonk) end)
 	end
 end)
+
+PreviousHeroButton.MouseButton1Click:Connect(function()
+	if PreviousHero then
+		pcall(function() tweenToTarget(PreviousHero) end)
+	end
+end)
+
+TrevorButton.MouseButton1Click:Connect(function()
+	if Trevor then
+		pcall(function() tweenToTarget(Trevor) end)
+	end
+end)
+
+while wait() do
+	local camera = workspace and workspace.CurrentCamera
+	local function updateLayout()
+		if not camera then return end
+		local vw = camera.ViewportSize
+		local widthPx = math.clamp(math.floor(vw.X * 0.20), 220, 480)
+		local heightPx = math.clamp(math.floor(vw.Y * 0.15), 72, 160)
+		Container.Size = UDim2.new(0, widthPx, 0, heightPx)
+		UIListLayout.Padding = UDim.new(0, math.max(2, 0))
+	end
+
+	if camera then
+		updateLayout()
+		camera:GetPropertyChangedSignal("ViewportSize"):Connect(updateLayout)
+	end
+end
