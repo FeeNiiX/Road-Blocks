@@ -203,7 +203,6 @@ DecreaseButton.MouseButton1Click:Connect(function()
 	duration = math.max(0, duration - 60)
 end)
 
--- Connect extra target buttons to call tweenToTarget with safety checks
 AncientMonkButton.MouseButton1Click:Connect(function()
 	if AncientMonk then
 		pcall(function() tweenToTarget(AncientMonk) end)
@@ -234,19 +233,21 @@ spawn(function()
 	end
 end)
 
-while wait() do
-	local camera = workspace and workspace.CurrentCamera
-	local function updateLayout()
-		if not camera then return end
-		local vw = camera.ViewportSize
-		local widthPx = math.clamp(math.floor(vw.X * 0.20), 220, 480)
-		local heightPx = math.clamp(math.floor(vw.Y * 0.15), 72, 160)
-		Container.Size = UDim2.new(0, widthPx, 0, heightPx)
-		UIListLayout.Padding = UDim.new(0, math.max(2, 0))
-	end
+spawn(function()
+	while wait() do
+		local camera = workspace and workspace.CurrentCamera
+		local function updateLayout()
+			if not camera then return end
+			local vw = camera.ViewportSize
+			local widthPx = math.clamp(math.floor(vw.X * 0.20), 220, 480)
+			local heightPx = math.clamp(math.floor(vw.Y * 0.15), 72, 160)
+			Container.Size = UDim2.new(0, widthPx, 0, heightPx)
+			UIListLayout.Padding = UDim.new(0, math.max(2, 0))
+		end
 
-	if camera then
-		updateLayout()
-		camera:GetPropertyChangedSignal("ViewportSize"):Connect(updateLayout)
+		if camera then
+			updateLayout()
+			camera:GetPropertyChangedSignal("ViewportSize"):Connect(updateLayout)
+		end
 	end
-end
+end)
