@@ -222,6 +222,18 @@ TrevorButton.MouseButton1Click:Connect(function()
 	end
 end)
 
+spawn(function()
+	while wait() do
+		local elapsed = math.floor(tick() - startTime)
+		TimeLabel.Text = "Time: " .. elapsed .. "/" .. duration .. "s"
+
+		if Hopping and elapsed >= duration then
+			serverHop()
+			wait(3)
+		end
+	end
+end)
+
 while wait() do
 	local camera = workspace and workspace.CurrentCamera
 	local function updateLayout()
