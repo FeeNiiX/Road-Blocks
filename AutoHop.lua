@@ -12,15 +12,11 @@ local startTime = tick()
 local duration = 30 * 60
 local Hopping = true
 
-local AncientMonk = RS:FindFirstChild("NPCs") and RS.NPCs:FindFirstChild("Ancient Monk") or workspace:FindFirstChild("Ancient Monk")
-local PreviousHero = RS:FindFirstChild("NPCs") and RS.NPCs:FindFirstChild("Previous Hero") or workspace:FindFirstChild("Previous Hero")
-local Trevor = RS:FindFirstChild("NPCs") and RS.NPCs:FindFirstChild("Trevor") or workspace:FindFirstChild("Trevor")
-
 local function tweenToTarget(target)
-	local distance = (target.PrimaryPart.Position - plr.PrimaryPart.Position).Magnitude
+	local distance = (target.PrimaryPart.Position - plr.Character.PrimaryPart.Position).Magnitude
 	local time = distance / 350
 	local info = TweenInfo.new(time, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
-	local tween = TweenService:Create(plr.PrimaryPart, info, {CFrame = CFrame.new(target.PrimaryPart.Position)})
+	local tween = TweenService:Create(plr.Character.PrimaryPart, info, {CFrame = CFrame.new(target.PrimaryPart.Position)})
 	tween:Play()
 end
 
@@ -204,21 +200,21 @@ DecreaseButton.MouseButton1Click:Connect(function()
 end)
 
 AncientMonkButton.MouseButton1Click:Connect(function()
-	if AncientMonk then
-		pcall(function() tweenToTarget(AncientMonk) end)
-	end
+	local AncientMonk = (RS.NPCs:FindFirstChild("Ancient Monk") or workspace.NPCs:FindFirstChild("Ancient Monk"))
+	print("Teleporting to Ancient Monk...", AncientMonk)
+	tweenToTarget(AncientMonk)
 end)
 
 PreviousHeroButton.MouseButton1Click:Connect(function()
-	if PreviousHero then
-		pcall(function() tweenToTarget(PreviousHero) end)
-	end
+	local PreviousHero = (RS.NPCs:FindFirstChild("Previous Hero") or workspace.NPCs:FindFirstChild("Previous Hero"))
+	print("Teleporting to Previous Hero...", PreviousHero)
+	tweenToTarget(PreviousHero)
 end)
 
 TrevorButton.MouseButton1Click:Connect(function()
-	if Trevor then
-		pcall(function() tweenToTarget(Trevor) end)
-	end
+	local Trevor = (RS.NPCs:FindFirstChild("Trevor") or workspace.NPCs:FindFirstChild("Trevor"))
+	print("Teleporting to Trevor...", Trevor)
+	tweenToTarget(Trevor)
 end)
 
 spawn(function()
