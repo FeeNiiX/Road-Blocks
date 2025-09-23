@@ -55,6 +55,7 @@ local AncientMonkButton = Instance.new("TextButton")
 local PreviousHeroButton = Instance.new("TextButton")
 local TrevorButton = Instance.new("TextButton")
 local UzothButton = Instance.new("TextButton")
+local SharkmanButton = Instance.new("TextButton")
 
 ScreenGui.Parent = Players.LocalPlayer.PlayerGui
 
@@ -122,7 +123,7 @@ IncreaseButton.BackgroundColor3 = Color3.fromRGB(40, 180, 40)
 IncreaseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 IncreaseButton.Font = Enum.Font.SourceSans
 IncreaseButton.TextScaled = true
-IncreaseButton.Text = "+ 1 Min"
+IncreaseButton.Text = "+ 5 Min"
 
 DecreaseButton.Name = "DecreaseButton"
 DecreaseButton.Parent = ControlsFrame
@@ -134,7 +135,7 @@ DecreaseButton.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
 DecreaseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 DecreaseButton.Font = Enum.Font.SourceSans
 DecreaseButton.TextScaled = true
-DecreaseButton.Text = "- 1 Min"
+DecreaseButton.Text = "- 5 Min"
 
 ExtraButtonsFrame.Name = "ExtraButtonsFrame"
 ExtraButtonsFrame.Parent = Container
@@ -144,10 +145,10 @@ ExtraButtonsFrame.BackgroundTransparency = 1
 AncientMonkButton.Name = "AncientMonkButton"
 AncientMonkButton.Parent = ExtraButtonsFrame
 AncientMonkButton.AnchorPoint = Vector2.new(1, 0)
-AncientMonkButton.Position = UDim2.new(0.25, 0, 0, 0)
-AncientMonkButton.Size = UDim2.new(0.25, 0, 1, 0)
+AncientMonkButton.Position = UDim2.new(0.2, 0, 0, 0)
+AncientMonkButton.Size = UDim2.new(0.2, 0, 1, 0)
 AncientMonkButton.BackgroundTransparency = 0.5
-AncientMonkButton.BackgroundColor3 = Color3.fromRGB(60, 120, 220)
+AncientMonkButton.BackgroundColor3 = Color3.fromRGB(0, 200, 200)
 AncientMonkButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 AncientMonkButton.Font = Enum.Font.SourceSans
 AncientMonkButton.TextScaled = true
@@ -156,8 +157,8 @@ AncientMonkButton.Text = "TP To Ancient Monk"
 PreviousHeroButton.Name = "PreviousHeroButton"
 PreviousHeroButton.Parent = ExtraButtonsFrame
 PreviousHeroButton.AnchorPoint = Vector2.new(1, 0)
-PreviousHeroButton.Position = UDim2.new(0.5, 0, 0, 0)
-PreviousHeroButton.Size = UDim2.new(0.25, 0, 1, 0)
+PreviousHeroButton.Position = UDim2.new(0.4, 0, 0, 0)
+PreviousHeroButton.Size = UDim2.new(0.2, 0, 1, 0)
 PreviousHeroButton.BackgroundTransparency = 0.5
 PreviousHeroButton.BackgroundColor3 = Color3.fromRGB(120, 60, 220)
 PreviousHeroButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -168,10 +169,10 @@ PreviousHeroButton.Text = "TP To Previous Hero"
 TrevorButton.Name = "TrevorButton"
 TrevorButton.Parent = ExtraButtonsFrame
 TrevorButton.AnchorPoint = Vector2.new(1, 0)
-TrevorButton.Position = UDim2.new(0.75, 0, 0, 0)
-TrevorButton.Size = UDim2.new(0.25, 0, 1, 0)
+TrevorButton.Position = UDim2.new(0.6, 0, 0, 0)
+TrevorButton.Size = UDim2.new(0.2, 0, 1, 0)
 TrevorButton.BackgroundTransparency = 0.5
-TrevorButton.BackgroundColor3 = Color3.fromRGB(255, 90, 255)
+TrevorButton.BackgroundColor3 = Color3.fromRGB(255, 100, 255)
 TrevorButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 TrevorButton.Font = Enum.Font.SourceSans
 TrevorButton.TextScaled = true
@@ -180,14 +181,26 @@ TrevorButton.Text = "TP To Trevor"
 UzothButton.Name = "UzothButton"
 UzothButton.Parent = ExtraButtonsFrame
 UzothButton.AnchorPoint = Vector2.new(1, 0)
-UzothButton.Position = UDim2.new(1, 0, 0, 0)
-UzothButton.Size = UDim2.new(0.25, 0, 1, 0)
+UzothButton.Position = UDim2.new(0.8, 0, 0, 0)
+UzothButton.Size = UDim2.new(0.2, 0, 1, 0)
 UzothButton.BackgroundTransparency = 0.5
-UzothButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+UzothButton.BackgroundColor3 = Color3.fromRGB(255, 125, 0)
 UzothButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 UzothButton.Font = Enum.Font.SourceSans
 UzothButton.TextScaled = true
 UzothButton.Text = "TP To Uzoth"
+
+SharkmanButton.Name = "SharkmanButton"
+SharkmanButton.Parent = ExtraButtonsFrame
+SharkmanButton.AnchorPoint = Vector2.new(1, 0)
+SharkmanButton.Position = UDim2.new(1, 0, 0, 0)
+SharkmanButton.Size = UDim2.new(0.2, 0, 1, 0)
+SharkmanButton.BackgroundTransparency = 0.5
+SharkmanButton.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
+SharkmanButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+SharkmanButton.Font = Enum.Font.SourceSans
+SharkmanButton.TextScaled = true
+SharkmanButton.Text = "TP To Uzoth"
 
 Toggle.MouseButton1Click:Connect(function()
 	if Toggle.Text == "Toggle: ON" then
@@ -204,11 +217,11 @@ Hop.MouseButton1Click:Connect(function()
 end)
 
 IncreaseButton.MouseButton1Click:Connect(function()
-	duration = duration + 60
+	duration = duration + 300
 end)
 
 DecreaseButton.MouseButton1Click:Connect(function()
-	duration = math.max(0, duration - 60)
+	duration = math.max(0, duration - 300)
 end)
 
 AncientMonkButton.MouseButton1Click:Connect(function()
@@ -254,7 +267,7 @@ spawn(function()
 			if not camera then return end
 			local vw = camera.ViewportSize
 			local widthPx = math.clamp(math.floor(vw.X * 0.20), 220, 480)
-			local heightPx = math.clamp(math.floor(vw.Y * 0.15), 72, 160)
+			local heightPx = math.clamp(math.floor(vw.Y * 0.20), 72, 160)
 			Container.Size = UDim2.new(0, widthPx, 0, heightPx)
 			UIListLayout.Padding = UDim.new(0, math.max(2, 0))
 		end
