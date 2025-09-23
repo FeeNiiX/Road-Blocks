@@ -106,7 +106,7 @@ Toggle.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 Toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 Toggle.Font = Enum.Font.SourceSans
 Toggle.TextScaled = true
-Toggle.Text = "Toggle: ON"
+Toggle.Text = "Hopping: ON"
 
 ControlsFrame.Name = "ControlsFrame"
 ControlsFrame.Parent = Container
@@ -200,14 +200,14 @@ SharkmanButton.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
 SharkmanButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 SharkmanButton.Font = Enum.Font.SourceSans
 SharkmanButton.TextScaled = true
-SharkmanButton.Text = "TP To Uzoth"
+SharkmanButton.Text = "TP To Sharkman Teacher"
 
 Toggle.MouseButton1Click:Connect(function()
-	if Toggle.Text == "Toggle: ON" then
-		Toggle.Text = "Toggle: OFF"
+	if Toggle.Text == "Hopping: ON" then
+		Toggle.Text = "Hopping: OFF"
 		Hopping = false
 	else
-		Toggle.Text = "Toggle: ON"
+		Toggle.Text = "Hopping: ON"
 		Hopping = true
 	end
 end)
@@ -226,26 +226,32 @@ end)
 
 AncientMonkButton.MouseButton1Click:Connect(function()
 	local AncientMonk = (RS.NPCs:FindFirstChild("Ancient Monk") or workspace.NPCs:FindFirstChild("Ancient Monk"))
-	print("Teleporting to Ancient Monk...", AncientMonk)
+	if not AncientMonk then return end
 	tweenToTarget(AncientMonk)
 end)
 
 PreviousHeroButton.MouseButton1Click:Connect(function()
 	local PreviousHero = (RS.NPCs:FindFirstChild("Previous Hero") or workspace.NPCs:FindFirstChild("Previous Hero"))
-	print("Teleporting to Previous Hero...", PreviousHero)
+	if not PreviousHero then return end
 	tweenToTarget(PreviousHero)
 end)
 
 TrevorButton.MouseButton1Click:Connect(function()
 	local Trevor = (RS.NPCs:FindFirstChild("Trevor") or workspace.NPCs:FindFirstChild("Trevor"))
-	print("Teleporting to Trevor...", Trevor)
+	if not Trevor then return end
 	tweenToTarget(Trevor)
 end)
 
 UzothButton.MouseButton1Click:Connect(function()
 	local Uzoth = (RS.NPCs:FindFirstChild("Uzoth") or workspace.NPCs:FindFirstChild("Uzoth"))
-	print("Teleporting to Uzoth...", Uzoth)
+	if not Uzoth then return end
 	tweenToTarget(Uzoth)
+end)
+
+SharkmanButton.MouseButton1Click:Connect(function()
+	local SharkmanTeacher = (RS.NPCs:FindFirstChild("Sharkman Teacher") or workspace.NPCs:FindFirstChild("Sharkman Teacher"))
+	if not SharkmanTeacher then return end
+	tweenToTarget(SharkmanTeacher)
 end)
 
 spawn(function()
