@@ -44,7 +44,7 @@ local AutoMS = false
 local AutoJF = false
 local AutoPP = false
 local AutoMSJF = false
-local Weight = 1
+local Weight = 3
 
 local function ServerHop()
 	local PlaceId = game.PlaceId
@@ -112,6 +112,24 @@ local Window = Rayfield:CreateWindow({
 local FarmsTab = Window:CreateTab("Farms", 4483362458)
 local FarmSection = FarmsTab:CreateSection("Auto Farms")
 
+local Dropdown = FarmsTab:CreateDropdown({
+	Name = "Weight",
+	Options = {"Unequipped" ,"100 LB", "1 TON", "10 TON", "100 TON"},
+	CurrentOption = "10 TON",
+	MultipleOptions = false,
+	Flag = "Weight",
+	Callback = function(Options)
+		local weightMap = {
+			["Unequipped"] = 0,
+			["100 LB"] = 1,
+			["1 TON"] = 2,
+			["10 TON"] = 3,
+			["100 TON"] = 4
+		}
+		Weight = weightMap[Options[1]] or 0
+	end,
+})
+
 local Toggle = FarmsTab:CreateToggle({
 	Name = "Auto Respawn",
 	CurrentValue = false,
@@ -173,17 +191,6 @@ local Toggle = FarmsTab:CreateToggle({
 	Flag = "AutoPP",
 	Callback = function(Value)
 	AutoPP = Value
-	end,
-})
-
-local Dropdown = FarmsTab:CreateDropdown({
-	Name = "Weight",
-	Options = {1, 2, 3, 4},
-	CurrentOption = "3",
-	MultipleOptions = false,
-	Flag = "Weight",
-	Callback = function(Options)
-		Weight = Options[1]
 	end,
 })
 
@@ -358,13 +365,11 @@ spawn(function()
 				Players.LocalPlayer.PlayerGui.IntroGui.Enabled = false
 				Players.LocalPlayer.PlayerGui.ScreenGui.Enabled = true
 				game.Lighting.Blur.Enabled = false
-				while not Players.LocalPlayer.Character do
-					wait()
-				end
-				if lastDeath then
+				wait(3)
+				if Players.LocalPlayer.Character and lastDeath then
 					Players.LocalPlayer.Character:SetPrimaryPartCFrame(lastDeath)
 				else
-					print('no lastDeath found')
+					print('no char or lastDeath found')
 				end
 			end
 		end
