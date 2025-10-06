@@ -5,6 +5,8 @@ local HttpService = game:GetService("HttpService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local VirtualUser = cloneref(game:GetService("VirtualUser"))
 
+-- TODO: Make GUI for tracking
+
 local GC = getconnections or get_signal_cons
 if GC then
 	for i,v in pairs(GC(Players.LocalPlayer.Idled)) do
@@ -34,17 +36,6 @@ local TrainingAreasStrings = {}
 for _, part in ipairs(TrainingAreas) do
 	table.insert(TrainingAreasStrings, tostring(part.Name))
 end
-
-local AutoInvis = false
-local AutoRespawn = false
-local TeamsESP = false
-local AutoFS = false
-local AutoBT = false
-local AutoMS = false
-local AutoJF = false
-local AutoPP = false
-local AutoMSJF = false
-local Weight = 3
 
 local function ServerHop()
 	local PlaceId = game.PlaceId
@@ -109,13 +100,95 @@ local Window = Rayfield:CreateWindow({
 	}
 })
 
+--[[
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠛⠛⠛⠉⠉⠉⠋⠛⠛⠛⠻⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡟⠛⠉⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠉⠙⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠋⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠈⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠏⠄⠄⠄⠄⠄⠄⠄⠂⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠈⠹⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⠛⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠠⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠘⢻⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⠃⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⢀⠄⢠⠄⠄⡀⠄⠄⢀⠂⠄⠄⠄⠄⠄⠄⠄⠄⠄⡁⠄⠄⢛⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⡇⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠐⡈⢔⠸⣐⢕⢕⢵⢰⢱⢰⢐⢤⡡⡢⣕⢄⢢⢠⠄⠄⠄⠄⠄⠄⠙⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⡁⠂⠅⢕⠌⡎⡎⣎⢎⢮⢮⣳⡳⣝⢮⢺⢜⢕⢕⢍⢎⠪⡐⠄⠁⠄⠸⣿⣿
+⣿⣿⣿⣿⣿⣿⠏⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠐⠄⠄⢅⠣⡡⡣⣣⡳⡵⣝⡮⣗⣗⡯⣗⣟⡮⡮⣳⣣⣳⢱⢱⠱⣐⠄⠂⠄⢿⣿
+⣿⣿⣿⣿⣿⣿⠄⠄⠄⠄⠄⠄⠄⠂⠄⠄⠄⠄⠄⠄⢂⢈⠢⡱⡱⡝⣮⣿⣟⣿⣽⣷⣿⣯⣿⣷⣿⣿⣿⣾⣯⣗⡕⡇⡇⠄⠂⡀⢹⣿
+⣿⣿⣿⣿⣿⡟⠄⠄⠄⠄⠄⠄⠂⠄⠄⠄⠄⠄⠄⠐⢀⢂⢕⢸⢨⢪⢳⡫⣟⣿⣻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡺⡮⡣⡣⠠⢂⠒⢸⣿
+⣿⣿⣿⣿⣿⡇⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠠⠐⠄⡂⠆⡇⣗⣝⢮⢾⣻⣞⣿⣿⣿⣿⣿⣿⣿⣿⢿⣽⣯⡯⣺⢸⢘⠨⠔⡅⢨⣿
+⣿⣿⠋⠉⠙⠃⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠁⠄⠄⠄⡂⡪⡪⡪⡮⡮⡯⣻⣽⣾⣿⣿⣿⣟⣿⣿⣿⣽⣿⣿⡯⣯⡺⡸⡰⡱⢐⡅⣼⣿
+⣿⠡⡀⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠠⠈⠆⠱⠑⠝⠜⠕⡝⡝⣞⢯⢿⣿⣿⡿⣟⣿⣿⣿⡿⡿⣽⣷⣽⡸⡨⡪⣂⠊⣿⣿
+⣿⠡⠄⡨⣢⠐⠁⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠐⠍⡓⣗⡽⣝⠽⠍⠅⠑⠁⠉⠘⠘⠘⠵⡑⢜⢀⢀⢉⢽
+⣿⠁⠠⢱⢘⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠈⠈⠱⣁⠜⡘⠌⠄⠄⡪⣳⣟⡮⢅⠤⠠⠄⠄⣀⣀⡀⡀⠄⠈⡂⢲⡪⡠⣿
+⣿⡇⠨⣺⢐⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⡀⠄⠄⠄⠤⡠⡢⢒⠦⠠⠄⠄⠄⡸⢽⣟⢮⠢⡂⡐⠄⡈⡀⠤⡀⠄⠑⢄⠨⢸⡺⣐⣿
+⣿⣿⠈⠕⠁⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⡂⡪⡐⡥⢤⣰⣰⣰⡴⡮⠢⠂⠄⠄⡊⢮⢺⢕⢵⢥⡬⣌⣒⡚⣔⢚⢌⢨⢚⠌⣾⡪⣾⣿
+⣿⣿⣆⠄⡀⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⡑⢕⢕⡯⡷⣕⢧⢓⢭⠨⡀⠄⡂⠨⡨⣪⡳⣝⢝⡽⣻⣻⣞⢽⣲⢳⢱⢡⠱⠨⣟⢺⣿⣿
+⣿⣿⣿⡆⠄⡅⠇⡄⠄⠄⠄⠄⠄⠄⠄⠐⠨⢪⢹⢽⢽⣺⢝⠉⠁⠁⠄⠄⠄⢌⢎⡖⡯⡎⡗⢝⠜⣶⣯⣻⢮⡻⣟⣳⡕⠅⣷⣿⣿⣿
+⣿⣿⣿⣿⣶⣶⣿⣷⠄⠄⠄⠄⠄⠄⠄⠄⠈⠔⡑⠕⠝⠄⡀⠄⠄⠊⢆⠂⠨⡪⣺⣮⣿⡾⡜⣜⡜⣄⠙⢞⣿⢿⡿⣗⢝⢸⣾⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⠄⠄⠄⠄⠄⡀⠄⠄⠄⠄⢀⠄⠠⠄⠠⠄⠄⠄⠄⠄⠄⠊⠺⡹⠳⡙⡜⡓⡭⡺⡀⠄⠣⡻⡹⡸⠨⣣⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⠄⠄⠄⠄⠄⠠⠄⠄⣂⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⢄⠤⡤⡄⡆⡯⡢⡣⡣⡓⢕⠽⣄⠄⠨⡂⢌⣼⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⡆⠄⠄⠄⠄⠈⠆⠄⠸⡂⠄⠄⠄⢀⠄⢀⠈⠄⠂⠁⠙⠝⠼⠭⠣⠣⠣⠑⠌⠢⠣⡣⡠⡘⣰⣱⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⡇⠄⠄⠄⠄⠄⢑⠄⠈⡱⠄⢘⠄⡀⠨⢐⣧⣳⣷⣶⣦⣤⣴⣶⣶⣶⡶⠄⡠⡢⡕⣜⠎⡮⣣⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⡇⠄⠄⠄⠄⠄⠄⠢⠄⠨⠄⠄⠣⡀⠄⢀⢀⢙⠃⡿⢿⠿⡿⡿⢟⢋⢔⡱⣝⢜⡜⡪⡪⣵⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⡁⠄⠄⠄⠄⠄⠄⠄⠅⠄⠡⠄⠄⠡⢀⢂⠢⡡⠡⠣⡑⣏⢯⡻⡳⣹⡺⡪⢎⠎⡆⢣⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣇⠄⠄⠄⠄⠄⠄⠄⠐⠄⠄⠁⠄⢈⠄⢂⠕⡕⡝⢕⢎⢎⢮⢎⢯⢺⢸⢬⠣⢃⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⡀⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠠⠨⡐⠌⢆⢇⢧⢭⣣⡳⣵⢫⣳⢱⠱⢑⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣆⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠁⡊⢌⢢⢡⢣⢪⡺⡪⡎⡎⡎⡚⣨⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣄⡀⠄⠄⠄⠄⠄⠄⠄⠄⠄⠕⡅⢗⢕⡳⡭⣳⢕⠕⡱⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡀⠄⠄⠄⠄⠄⠄⠄⠄⠄⠌⠄⠑⠩⢈⢂⣱⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⡀⢄⠄⣀⠄⡀⣀⢠⢄⣖⣖⣞⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⣱⡐⡕⡕⡽⣝⣟⣮⣾⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣵⣽⣸⣃⣧⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+]]
+
+--[[ local Debug = Window:CreateTab("Debug", 4483362458)
+local DebugSection = Debug:CreateSection("Ligma")
+
+local Toggle = Debug:CreateToggle({
+	Name = "Tracking",
+	CurrentValue = false,
+	Flag = "Tracking",
+	Callback = function(Value)
+		Tracking = Value
+	end,
+})
+
+local Toggle = Debug:CreateToggle({
+	Name = "Auto Respawn",
+	CurrentValue = false,
+	Flag = "AutoRespawn",
+	Callback = function(Value)
+	AutoRespawn = Value
+	end,
+})
+
+local Toggle = Debug:CreateToggle({
+	Name = "Auto Fist Strenght",
+	CurrentValue = false,
+	Flag = "AutoFS",
+	Callback = function(Value)
+	AutoFS = Value
+	end,
+})
+
+local Button = Debug:CreateButton({
+	Name = "Red Star",
+	Callback = function()
+	Players.LocalPlayer.Character:SetPrimaryPartCFrame(workspace.Map.Training_Collisions.FistStrength.StarFSTraining3.CFrame + Vector3.new(0, 10, 0))
+	end,
+})
+
+local Button = Debug:CreateButton({
+	Name = "Rejoin",
+	Callback = function()
+	Rejoin()
+	end,
+}) ]]
+
 local FarmsTab = Window:CreateTab("Farms", 4483362458)
 local FarmSection = FarmsTab:CreateSection("Auto Farms")
 
 local Dropdown = FarmsTab:CreateDropdown({
 	Name = "Weight",
 	Options = {"Unequipped" ,"100 LB", "1 TON", "10 TON", "100 TON"},
-	CurrentOption = "10 TON",
+	CurrentOption = "100 TON",
 	MultipleOptions = false,
 	Flag = "Weight",
 	Callback = function(Options)
@@ -133,10 +206,9 @@ local Dropdown = FarmsTab:CreateDropdown({
 local Toggle = FarmsTab:CreateToggle({
 	Name = "Auto Respawn",
 	CurrentValue = false,
-	Flag = "AutoBT",
+	Flag = "AutoRespawn",
 	Callback = function(Value)
 	AutoRespawn = Value
-	print(AutoRespawn)
 	end,
 })
 
@@ -230,13 +302,23 @@ local Toggle = MiscTab:CreateToggle({
 })
 
 local Toggle = MiscTab:CreateToggle({
-	Name = "Teams ESP",
+	Name = "Tracking",
 	CurrentValue = false,
-	Flag = "TeamsESP",
+	Flag = "Tracking",
 	Callback = function(Value)
-		TeamsESP = Value
+		Tracking = Value
 	end,
 })
+
+local Toggle = MiscTab:CreateToggle({
+	Name = "ESP",
+	CurrentValue = false,
+	Flag = "ESP",
+	Callback = function(Value)
+		ESP = Value
+	end,
+})
+
 
 local TeleportsTab = Window:CreateTab("Teleports", 4483362458)
 local TeleportsSection = TeleportsTab:CreateSection("Teleports Section")
@@ -262,90 +344,163 @@ local Dropdown = TeleportsTab:CreateDropdown({
 	MultipleOptions = false,
 	Flag = "Teleports",
 	Callback = function(Options)
-		TeleportTo = Options
 		for _, part in ipairs(TrainingAreas) do
-			if part.Name == TeleportTo[1] then
+			if part.Name == Options[1] then
 				Players.LocalPlayer.Character:SetPrimaryPartCFrame(part.CFrame + Vector3.new(0, 10, 0))
-				print("Teleported to:", part.Name)
 				break
 			end
 		end
 	end,
 })
 
+local Button = TeleportsTab:CreateButton({
+	Name = "Red Star",
+	Callback = function()
+	Players.LocalPlayer.Character:SetPrimaryPartCFrame(workspace.Map.Training_Collisions.FistStrength.StarFSTraining3.CFrame + Vector3.new(0, 10, 0))
+	end,
+})
+
 local tickrate = 1 / 30
+local fsTrack
+
 spawn(function()
 	while wait(tickrate) do
-		if TeamsESP then
+
+		local char = Players.LocalPlayer and Players.LocalPlayer.Character
+		local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+		if Tracking then
+			if Players.LocalPlayer.PlayerGui and Players.LocalPlayer.PlayerGui.ScreenGui and Players.LocalPlayer.PlayerGui.ScreenGui.MenuFrame and Players.LocalPlayer.PlayerGui.ScreenGui.MenuFrame.InfoFrame and Players.LocalPlayer.PlayerGui.ScreenGui.MenuFrame.InfoFrame.FSTxt then
+				local fsText = Players.LocalPlayer.PlayerGui.ScreenGui.MenuFrame.InfoFrame.FSTxt.Text
+				local fsValueStr = fsText:match("Fist Strength%s*:%s*([%d%.]+%a*)")
+				local multipliers = {K = 1e3, M = 1e6, B = 1e9, T = 1e12, Qa = 1e15, Qi = 1e18, Sx = 1e21, Sp = 1e24, Oc = 1e27, No = 1e30, Dc = 1e33}
+
+				local function parseFS(str)
+					if not str then return 0 end
+					local num, suffix = str:match("([%d%.]+)(%a*)")
+					num = tonumber(num)
+					if num and suffix and multipliers[suffix] then
+						return num * multipliers[suffix]
+					elseif num then
+						return num
+					end
+					return 0
+				end
+
+				if fsValueStr then
+					if not fsTrack then
+						fsTrack = {
+							startTime = tick(),
+							startValue = parseFS(fsValueStr),
+							lastValue = parseFS(fsValueStr),
+							lastTime = tick(),
+							gainPerHour = 0
+						}
+					else
+						local currentValue = parseFS(fsValueStr)
+						local currentTime = tick()
+						local elapsed = currentTime - fsTrack.startTime
+						local gain = currentValue - fsTrack.startValue
+						if elapsed > 0 then
+							fsTrack.gainPerHour = gain / elapsed * 3600
+						end
+						fsTrack.lastValue = currentValue
+						fsTrack.lastTime = currentTime
+					end
+
+					local function formatNumber(n)
+						local s = tostring(math.floor(n))
+						local formatted = s:reverse():gsub("(%d%d%d)", "%1."):reverse()
+						formatted = formatted:gsub("^%.", "")
+						return formatted
+					end
+
+					print(string.format("Fist Strength/H: %s", formatNumber(fsTrack.gainPerHour)))
+				end
+			end
+		end
+
+		if ESP then
 			for _, v in pairs(Players:GetPlayers()) do
-				local status = v:FindFirstChild("leaderstats") and v.leaderstats:FindFirstChild("Status").Value
+				local status = v:FindFirstChild("leaderstats") and v.leaderstats:FindFirstChild("Status") and v.leaderstats.Status.Value
 				if v.Character and v.Character:FindFirstChild("Head") then
-					local statusText = v.Character.Head:FindFirstChild("StatusBillboard")
+					local statusText = v.Character.Head:FindFirstChild("BillboardGui")
 					if not statusText then
 						statusText = Instance.new("BillboardGui")
-						statusText.Name = "StatusBillboard"
+						statusText.Name = "BillboardGui"
 						statusText.Adornee = v.Character.Head
-						statusText.Size = UDim2.new(0, 100, 0, 25)
+						statusText.Size = UDim2.new(0, 100, 0, 50)
 						statusText.AlwaysOnTop = true
 						statusText.MaxDistance = math.huge
 						statusText.Parent = v.Character.Head
 
-						local textLabel = Instance.new("TextLabel")
-						textLabel.Name = "StatusLabel"
-						textLabel.Size = UDim2.new(1, 0, 1, 0)
-						textLabel.BackgroundTransparency = 1
-						textLabel.TextScaled = true
-						textLabel.Font = Enum.Font.SourceSansBold
-						textLabel.Parent = statusText
+						local nameLabel = Instance.new("TextLabel")
+						nameLabel.Name = "NameLabel"
+						nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+						nameLabel.Position = UDim2.new(0, 0, 0, 0)
+						nameLabel.BackgroundTransparency = 1
+						nameLabel.TextScaled = true
+						nameLabel.Font = Enum.Font.SourceSansBold
+						nameLabel.TextStrokeTransparency = 0
+						nameLabel.TextStrokeColor3 = Color3.new(0,0,0)
+						nameLabel.Parent = statusText
+
+						local statusLabel = Instance.new("TextLabel")
+						statusLabel.Name = "StatusLabel"
+						statusLabel.Size = UDim2.new(1, 0, 0.5, 0)
+						statusLabel.Position = UDim2.new(0, 0, 0.5, 0)
+						statusLabel.BackgroundTransparency = 1
+						statusLabel.TextScaled = true
+						statusLabel.Font = Enum.Font.SourceSansBold
+						statusLabel.TextStrokeTransparency = 0
+						statusLabel.TextStrokeColor3 = Color3.new(0,0,0)
+						statusLabel.Parent = statusText
 					end
 
-					local textLabel = statusText:FindFirstChild("StatusLabel")
-					if textLabel then
-						textLabel.Text = tostring(status or "")
+					local nameLabel = statusText:FindFirstChild("NameLabel")
+					local statusLabel = statusText:FindFirstChild("StatusLabel")
+					if statusLabel then
+						statusLabel.Text = tostring(status or "")
 						if status == "Innocent" then
-							textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+							statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 						elseif status == "Protector" then
-							textLabel.TextColor3 = Color3.fromRGB(255, 255, 150)
+							statusLabel.TextColor3 = Color3.fromRGB(255, 255, 150)
 						elseif status == "Guardian" then
-							textLabel.TextColor3 = Color3.fromRGB(144, 240, 144)
+							statusLabel.TextColor3 = Color3.fromRGB(144, 240, 144)
 						elseif status == "Superhero" then
-							textLabel.TextColor3 = Color3.fromRGB(0, 0, 255)
+							statusLabel.TextColor3 = Color3.fromRGB(0, 0, 255)
 						elseif status == "Lawbreaker" then
-							textLabel.TextColor3 = Color3.fromRGB(255, 140, 0)
+							statusLabel.TextColor3 = Color3.fromRGB(255, 140, 0)
 						elseif status == "Criminal" then
-							textLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+							statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
 						elseif status == "Supervillain" then
-							textLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+							statusLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
 						else
-							textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+							statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 						end
+					end
+					if nameLabel then
+						nameLabel.Text = v.DisplayName
+						nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 					end
 				end
 			end
 		end
 
-		local character = Players.LocalPlayer and Players.LocalPlayer.Character
-		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 
-		if humanoid and humanoid.Health <= 0 then
-			if character and character.PrimaryPart then
-				lastDeath = character.PrimaryPart.CFrame + Vector3.new(0, 10, 0)
-			end
+		if char and char.PrimaryPart and hum and hum.Health <= 0 then
+			lastDeath = char.PrimaryPart.CFrame + Vector3.new(0, 10, 0)
 		end
 
 		if AutoInvis then
-			if character and character:FindFirstChild("Head") then
-				if character.Head.Transparency == 0 then
-					VirtualInputManager:SendKeyEvent(true, "T", false, game)
-				end
+			if char and char:FindFirstChild("Head") and char:FindFirstChild("Head").Transparency == 0 then
+				VirtualInputManager:SendKeyEvent(true, "T", false, game)
 			end
 		end
 
 		if AutoHideAura then
-			if character and character:FindFirstChild("LeftHand") then
-				if character.LeftHand:FindFirstChild("SPTS_FS_AURA") then
-					VirtualInputManager:SendKeyEvent(true, "X", false, game)
-				end
+			if char and char:FindFirstChild("LeftHand") and char:FindFirstChild("LeftHand"):FindFirstChild("SPTS_FS_AURA") then
+				VirtualInputManager:SendKeyEvent(true, "X", false, game)
 			end
 		end -- yes the bills are very very high, and the rent is due
 
@@ -353,10 +508,10 @@ spawn(function()
 			if Players.LocalPlayer and Players.LocalPlayer.Backpack then
 				local tool = Players.LocalPlayer.Backpack:FindFirstChild("Meditate")
 			end
-			if tool and character then
-				tool.Parent = Players.LocalPlayer.Character
+			if tool and char then
+				tool.Parent = char
+				wait(1)
 			end
-			wait(1)
 		end
 
 		if AutoRespawn then
@@ -366,32 +521,34 @@ spawn(function()
 				Players.LocalPlayer.PlayerGui.ScreenGui.Enabled = true
 				game.Lighting.Blur.Enabled = false
 				wait(3)
-				if Players.LocalPlayer.Character and lastDeath then
-					Players.LocalPlayer.Character:SetPrimaryPartCFrame(lastDeath)
+				if char and lastDeath then
+					char:SetPrimaryPartCFrame(lastDeath)
 				else
 					print('no char or lastDeath found')
 				end
 			end
 		end
 		
-		if AutoFS then
-			ReplicatedStorage.RemoteEvent:FireServer({"Add_FS_Request"})
-		end
-		if AutoBT then
-			ReplicatedStorage.RemoteEvent:FireServer({"+BT1"})
-		end
-		if AutoMS then
-			ReplicatedStorage.RemoteEvent:FireServer({[1] = "EquipWeight_Request", [2] = Weight})
-			ReplicatedStorage.RemoteEvent:FireServer({"Add_MS_Request"})
-		end
-		if AutoJF then
-			ReplicatedStorage.RemoteEvent:FireServer({[1] = "EquipWeight_Request", [2] = Weight})
-			ReplicatedStorage.RemoteEvent:FireServer({"Add_JF_Request"})
-		end
-		if AutoMSJF then
-			ReplicatedStorage.RemoteEvent:FireServer({[1] = "EquipWeight_Request", [2] = Weight})
-			ReplicatedStorage.RemoteEvent:FireServer({"Add_MS_Request"})
-			ReplicatedStorage.RemoteEvent:FireServer({"Add_JF_Request"})
+		if char then
+			if AutoFS then
+				ReplicatedStorage.RemoteEvent:FireServer({"Add_FS_Request"})
+			end
+			if AutoBT then
+				ReplicatedStorage.RemoteEvent:FireServer({"+BT1"})
+			end
+			if AutoMS then
+				ReplicatedStorage.RemoteEvent:FireServer({[1] = "EquipWeight_Request", [2] = Weight})
+				ReplicatedStorage.RemoteEvent:FireServer({"Add_MS_Request"})
+			end
+			if AutoJF then
+				ReplicatedStorage.RemoteEvent:FireServer({[1] = "EquipWeight_Request", [2] = Weight})
+				ReplicatedStorage.RemoteEvent:FireServer({"Add_JF_Request"})
+			end
+			if AutoMSJF then
+				ReplicatedStorage.RemoteEvent:FireServer({[1] = "EquipWeight_Request", [2] = Weight})
+				ReplicatedStorage.RemoteEvent:FireServer({"Add_MS_Request"})
+				ReplicatedStorage.RemoteEvent:FireServer({"Add_JF_Request"})
+			end
 		end
 	end
 end)
