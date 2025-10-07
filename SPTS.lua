@@ -5,7 +5,9 @@ local HttpService = game:GetService("HttpService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local VirtualUser = cloneref(game:GetService("VirtualUser"))
 
--- TODO: Make GUI for tracking
+-- TODO: Track all other stats (i am the goat)
+
+local Weight = 4
 
 local GC = getconnections or get_signal_cons
 if GC then
@@ -57,8 +59,44 @@ local function ServerHop()
 	end
 end
 
-local function Rejoin()
-	TeleportService:Teleport(game.PlaceId, Players.LocalPlayer)
+local ScreenGui = Instance.new("ScreenGui")
+local FistLabel = Instance.new("TextLabel")
+
+ScreenGui.Parent = game.CoreGui
+
+FistLabel.Name = "FistLabel"
+FistLabel.Parent = ScreenGui
+FistLabel.Position = UDim2.new(0, 0, 0.4, 0)
+FistLabel.Size = UDim2.new(0.1, 0, 0.05, 0)
+FistLabel.BackgroundTransparency = 0.5
+FistLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+FistLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+FistLabel.TextStrokeTransparency = 0
+FistLabel.TextStrokeColor3 = Color3.fromRGB(0 ,0 ,0)
+FistLabel.Font = Enum.Font.SourceSans
+FistLabel.TextScaled = true
+FistLabel.Text = "Fist Strength/H: 0"
+
+local fsTrack
+local multipliers = {K = 1e3, M = 1e6, B = 1e9, T = 1e12, Qa = 1e15, Qi = 1e18, Sx = 1e21, Sp = 1e24, Oc = 1e27, No = 1e30, Dc = 1e33}
+
+local function parseValue(str)
+	if not str then return 0 end
+	local num, suffix = str:match("([%d%.]+)(%a*)")
+	num = tonumber(num)
+	if num and suffix and multipliers[suffix] then
+		return num * multipliers[suffix]
+	elseif num then
+		return num
+	end
+	return 0
+end
+
+local function formatNumber(n)
+	local s = tostring(math.floor(n))
+	local formatted = s:reverse():gsub("(%d%d%d)", "%1."):reverse()
+	formatted = formatted:gsub("^%.", "")
+	return formatted
 end
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
@@ -99,88 +137,6 @@ local Window = Rayfield:CreateWindow({
 		Key = {"Hello"}
 	}
 })
-
---[[
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠛⠛⠛⠉⠉⠉⠋⠛⠛⠛⠻⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡟⠛⠉⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠉⠙⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠋⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠈⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠏⠄⠄⠄⠄⠄⠄⠄⠂⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠈⠹⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⠛⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠠⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠘⢻⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⠃⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⢀⠄⢠⠄⠄⡀⠄⠄⢀⠂⠄⠄⠄⠄⠄⠄⠄⠄⠄⡁⠄⠄⢛⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⡇⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠐⡈⢔⠸⣐⢕⢕⢵⢰⢱⢰⢐⢤⡡⡢⣕⢄⢢⢠⠄⠄⠄⠄⠄⠄⠙⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⡁⠂⠅⢕⠌⡎⡎⣎⢎⢮⢮⣳⡳⣝⢮⢺⢜⢕⢕⢍⢎⠪⡐⠄⠁⠄⠸⣿⣿
-⣿⣿⣿⣿⣿⣿⠏⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠐⠄⠄⢅⠣⡡⡣⣣⡳⡵⣝⡮⣗⣗⡯⣗⣟⡮⡮⣳⣣⣳⢱⢱⠱⣐⠄⠂⠄⢿⣿
-⣿⣿⣿⣿⣿⣿⠄⠄⠄⠄⠄⠄⠄⠂⠄⠄⠄⠄⠄⠄⢂⢈⠢⡱⡱⡝⣮⣿⣟⣿⣽⣷⣿⣯⣿⣷⣿⣿⣿⣾⣯⣗⡕⡇⡇⠄⠂⡀⢹⣿
-⣿⣿⣿⣿⣿⡟⠄⠄⠄⠄⠄⠄⠂⠄⠄⠄⠄⠄⠄⠐⢀⢂⢕⢸⢨⢪⢳⡫⣟⣿⣻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡺⡮⡣⡣⠠⢂⠒⢸⣿
-⣿⣿⣿⣿⣿⡇⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠠⠐⠄⡂⠆⡇⣗⣝⢮⢾⣻⣞⣿⣿⣿⣿⣿⣿⣿⣿⢿⣽⣯⡯⣺⢸⢘⠨⠔⡅⢨⣿
-⣿⣿⠋⠉⠙⠃⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠁⠄⠄⠄⡂⡪⡪⡪⡮⡮⡯⣻⣽⣾⣿⣿⣿⣟⣿⣿⣿⣽⣿⣿⡯⣯⡺⡸⡰⡱⢐⡅⣼⣿
-⣿⠡⡀⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠠⠈⠆⠱⠑⠝⠜⠕⡝⡝⣞⢯⢿⣿⣿⡿⣟⣿⣿⣿⡿⡿⣽⣷⣽⡸⡨⡪⣂⠊⣿⣿
-⣿⠡⠄⡨⣢⠐⠁⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠐⠍⡓⣗⡽⣝⠽⠍⠅⠑⠁⠉⠘⠘⠘⠵⡑⢜⢀⢀⢉⢽
-⣿⠁⠠⢱⢘⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠈⠈⠱⣁⠜⡘⠌⠄⠄⡪⣳⣟⡮⢅⠤⠠⠄⠄⣀⣀⡀⡀⠄⠈⡂⢲⡪⡠⣿
-⣿⡇⠨⣺⢐⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⡀⠄⠄⠄⠤⡠⡢⢒⠦⠠⠄⠄⠄⡸⢽⣟⢮⠢⡂⡐⠄⡈⡀⠤⡀⠄⠑⢄⠨⢸⡺⣐⣿
-⣿⣿⠈⠕⠁⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⡂⡪⡐⡥⢤⣰⣰⣰⡴⡮⠢⠂⠄⠄⡊⢮⢺⢕⢵⢥⡬⣌⣒⡚⣔⢚⢌⢨⢚⠌⣾⡪⣾⣿
-⣿⣿⣆⠄⡀⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⡑⢕⢕⡯⡷⣕⢧⢓⢭⠨⡀⠄⡂⠨⡨⣪⡳⣝⢝⡽⣻⣻⣞⢽⣲⢳⢱⢡⠱⠨⣟⢺⣿⣿
-⣿⣿⣿⡆⠄⡅⠇⡄⠄⠄⠄⠄⠄⠄⠄⠐⠨⢪⢹⢽⢽⣺⢝⠉⠁⠁⠄⠄⠄⢌⢎⡖⡯⡎⡗⢝⠜⣶⣯⣻⢮⡻⣟⣳⡕⠅⣷⣿⣿⣿
-⣿⣿⣿⣿⣶⣶⣿⣷⠄⠄⠄⠄⠄⠄⠄⠄⠈⠔⡑⠕⠝⠄⡀⠄⠄⠊⢆⠂⠨⡪⣺⣮⣿⡾⡜⣜⡜⣄⠙⢞⣿⢿⡿⣗⢝⢸⣾⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⠄⠄⠄⠄⠄⡀⠄⠄⠄⠄⢀⠄⠠⠄⠠⠄⠄⠄⠄⠄⠄⠊⠺⡹⠳⡙⡜⡓⡭⡺⡀⠄⠣⡻⡹⡸⠨⣣⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⠄⠄⠄⠄⠄⠠⠄⠄⣂⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⢄⠤⡤⡄⡆⡯⡢⡣⡣⡓⢕⠽⣄⠄⠨⡂⢌⣼⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⡆⠄⠄⠄⠄⠈⠆⠄⠸⡂⠄⠄⠄⢀⠄⢀⠈⠄⠂⠁⠙⠝⠼⠭⠣⠣⠣⠑⠌⠢⠣⡣⡠⡘⣰⣱⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⡇⠄⠄⠄⠄⠄⢑⠄⠈⡱⠄⢘⠄⡀⠨⢐⣧⣳⣷⣶⣦⣤⣴⣶⣶⣶⡶⠄⡠⡢⡕⣜⠎⡮⣣⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⡇⠄⠄⠄⠄⠄⠄⠢⠄⠨⠄⠄⠣⡀⠄⢀⢀⢙⠃⡿⢿⠿⡿⡿⢟⢋⢔⡱⣝⢜⡜⡪⡪⣵⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⡁⠄⠄⠄⠄⠄⠄⠄⠅⠄⠡⠄⠄⠡⢀⢂⠢⡡⠡⠣⡑⣏⢯⡻⡳⣹⡺⡪⢎⠎⡆⢣⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣇⠄⠄⠄⠄⠄⠄⠄⠐⠄⠄⠁⠄⢈⠄⢂⠕⡕⡝⢕⢎⢎⢮⢎⢯⢺⢸⢬⠣⢃⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⡀⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠠⠨⡐⠌⢆⢇⢧⢭⣣⡳⣵⢫⣳⢱⠱⢑⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣆⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠁⡊⢌⢢⢡⢣⢪⡺⡪⡎⡎⡎⡚⣨⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣄⡀⠄⠄⠄⠄⠄⠄⠄⠄⠄⠕⡅⢗⢕⡳⡭⣳⢕⠕⡱⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡀⠄⠄⠄⠄⠄⠄⠄⠄⠄⠌⠄⠑⠩⢈⢂⣱⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⡀⢄⠄⣀⠄⡀⣀⢠⢄⣖⣖⣞⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⣱⡐⡕⡕⡽⣝⣟⣮⣾⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣵⣽⣸⣃⣧⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-]]
-
---[[ local Debug = Window:CreateTab("Debug", 4483362458)
-local DebugSection = Debug:CreateSection("Ligma")
-
-local Toggle = Debug:CreateToggle({
-	Name = "Tracking",
-	CurrentValue = false,
-	Flag = "Tracking",
-	Callback = function(Value)
-		Tracking = Value
-	end,
-})
-
-local Toggle = Debug:CreateToggle({
-	Name = "Auto Respawn",
-	CurrentValue = false,
-	Flag = "AutoRespawn",
-	Callback = function(Value)
-	AutoRespawn = Value
-	end,
-})
-
-local Toggle = Debug:CreateToggle({
-	Name = "Auto Fist Strenght",
-	CurrentValue = false,
-	Flag = "AutoFS",
-	Callback = function(Value)
-	AutoFS = Value
-	end,
-})
-
-local Button = Debug:CreateButton({
-	Name = "Red Star",
-	Callback = function()
-	Players.LocalPlayer.Character:SetPrimaryPartCFrame(workspace.Map.Training_Collisions.FistStrength.StarFSTraining3.CFrame + Vector3.new(0, 10, 0))
-	end,
-})
-
-local Button = Debug:CreateButton({
-	Name = "Rejoin",
-	Callback = function()
-	Rejoin()
-	end,
-}) ]]
 
 local FarmsTab = Window:CreateTab("Farms", 4483362458)
 local FarmSection = FarmsTab:CreateSection("Auto Farms")
@@ -270,6 +226,20 @@ local MiscTab = Window:CreateTab("Misc", 4483362458)
 local MiscSection = MiscTab:CreateSection("Misc")
 
 local Button = MiscTab:CreateButton({
+	Name = "Rejoin",
+	Callback = function()
+	TeleportService:Teleport(game.PlaceId, Players.LocalPlayer)
+	end,
+})
+
+local Button = MiscTab:CreateButton({
+	Name = "Server Hop",
+	Callback = function()
+	ServerHop()
+	end,
+})
+
+local Button = MiscTab:CreateButton({
 	Name = "Infinite Yield",
 	Callback = function()
 		loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
@@ -301,14 +271,40 @@ local Toggle = MiscTab:CreateToggle({
 	end,
 })
 
-local Toggle = MiscTab:CreateToggle({
-	Name = "Tracking",
-	CurrentValue = false,
-	Flag = "Tracking",
-	Callback = function(Value)
-		Tracking = Value
+--[[ local Button = MiscTab:CreateButton({
+	Name = "Start Tracking",
+	Callback = function()
+		local FSTxt = Players.LocalPlayer.PlayerGui.ScreenGui.MenuFrame.InfoFrame.FSTxt
+		FSTxt:GetPropertyChangedSignal("Text"):Connect(function()
+			local FS_Text = FSTxt.Text
+			local FS_ValueStr = FS_Text:match("Fist Strength%s*:%s*([%d%.]+%a*)")
+
+			if FS_ValueStr then
+				if not FS_Track then
+					FS_Track = {
+						startTime = tick(),
+						startValue = parseValue(FS_ValueStr),
+						lastValue = parseValue(FS_ValueStr),
+						lastTime = tick(),
+						gainPerHour = 0
+					}
+				else
+					local currentValue = parseValue(FS_ValueStr)
+					local currentTime = tick()
+					local elapsed = currentTime - FS_Track.startTime
+					local gain = currentValue - FS_Track.startValue
+					if elapsed > 0 then
+						fsTFS_Trackrack.gainPerHour = gain / elapsed * 3600
+					end
+					FS_Track.lastValue = currentValue
+					FS_Track.lastTime = currentTime
+				end
+
+				FistLabel.Text = string.format("Fist Strength/H: %s", formatNumber(FS_Track.gainPerHour))
+			end
+		end)
 	end,
-})
+}) ]]
 
 local Toggle = MiscTab:CreateToggle({
 	Name = "ESP",
@@ -319,23 +315,8 @@ local Toggle = MiscTab:CreateToggle({
 	end,
 })
 
-
 local TeleportsTab = Window:CreateTab("Teleports", 4483362458)
 local TeleportsSection = TeleportsTab:CreateSection("Teleports Section")
-
-local Button = TeleportsTab:CreateButton({
-	Name = "Rejoin",
-	Callback = function()
-	Rejoin()
-	end,
-})
-
-local Button = TeleportsTab:CreateButton({
-	Name = "Server Hop",
-	Callback = function()
-	ServerHop()
-	end,
-})
 
 local Dropdown = TeleportsTab:CreateDropdown({
 	Name = "Teleports",
@@ -354,69 +335,89 @@ local Dropdown = TeleportsTab:CreateDropdown({
 })
 
 local Button = TeleportsTab:CreateButton({
+	Name = "Blue Star",
+	Callback = function()
+	Players.LocalPlayer.Character:SetPrimaryPartCFrame(workspace.Map.Training_Collisions.FistStrength.StarFSTraining1.CFrame + Vector3.new(0, 10, 0))
+	end,
+})
+
+local Button = TeleportsTab:CreateButton({
+	Name = "Green Star",
+	Callback = function()
+	Players.LocalPlayer.Character:SetPrimaryPartCFrame(workspace.Map.Training_Collisions.FistStrength.StarFSTraining2.CFrame + Vector3.new(0, 10, 0))
+	end,
+})
+
+local Button = TeleportsTab:CreateButton({
 	Name = "Red Star",
 	Callback = function()
 	Players.LocalPlayer.Character:SetPrimaryPartCFrame(workspace.Map.Training_Collisions.FistStrength.StarFSTraining3.CFrame + Vector3.new(0, 10, 0))
 	end,
 })
 
-local tickrate = 1 / 30
-local fsTrack
+local Button = TeleportsTab:CreateButton({
+	Name = "Psychic Island",
+	Callback = function()
+	Players.LocalPlayer.Character:SetPrimaryPartCFrame(workspace.Map.Training_Collisions.PsychicPower.PPTrainingPart4.CFrame + Vector3.new(0, 10, 0))
+	end,
+})
 
+local Button = TeleportsTab:CreateButton({
+	Name = "10T Pool",
+	Callback = function()
+	Players.LocalPlayer.Character:SetPrimaryPartCFrame(workspace.Map.Training_Collisions.BodyToughness.LavaPart2.CFrame)
+	end,
+})
+
+local tickrate = 1 / 30
 spawn(function()
 	while wait(tickrate) do
-
 		local char = Players.LocalPlayer and Players.LocalPlayer.Character
 		local hum = char and char:FindFirstChildOfClass("Humanoid")
 
-		if Tracking then
-			if Players.LocalPlayer.PlayerGui and Players.LocalPlayer.PlayerGui.ScreenGui and Players.LocalPlayer.PlayerGui.ScreenGui.MenuFrame and Players.LocalPlayer.PlayerGui.ScreenGui.MenuFrame.InfoFrame and Players.LocalPlayer.PlayerGui.ScreenGui.MenuFrame.InfoFrame.FSTxt then
-				local fsText = Players.LocalPlayer.PlayerGui.ScreenGui.MenuFrame.InfoFrame.FSTxt.Text
-				local fsValueStr = fsText:match("Fist Strength%s*:%s*([%d%.]+%a*)")
-				local multipliers = {K = 1e3, M = 1e6, B = 1e9, T = 1e12, Qa = 1e15, Qi = 1e18, Sx = 1e21, Sp = 1e24, Oc = 1e27, No = 1e30, Dc = 1e33}
+		if not AtmosphereDestroyed then
+			workspace.Map.TrainingArea.StarFSTraining1.Atmosphere1:Destroy()
+			workspace.Map.TrainingArea.StarFSTraining1.Atmosphere2:Destroy()
 
-				local function parseFS(str)
-					if not str then return 0 end
-					local num, suffix = str:match("([%d%.]+)(%a*)")
-					num = tonumber(num)
-					if num and suffix and multipliers[suffix] then
-						return num * multipliers[suffix]
-					elseif num then
-						return num
-					end
-					return 0
-				end
+			workspace.Map.TrainingArea.StarFSTraining2.Atmosphere1:Destroy()
+			workspace.Map.TrainingArea.StarFSTraining2.Atmosphere2:Destroy()
 
-				if fsValueStr then
-					if not fsTrack then
-						fsTrack = {
-							startTime = tick(),
-							startValue = parseFS(fsValueStr),
-							lastValue = parseFS(fsValueStr),
-							lastTime = tick(),
-							gainPerHour = 0
-						}
-					else
-						local currentValue = parseFS(fsValueStr)
-						local currentTime = tick()
-						local elapsed = currentTime - fsTrack.startTime
-						local gain = currentValue - fsTrack.startValue
-						if elapsed > 0 then
-							fsTrack.gainPerHour = gain / elapsed * 3600
+			workspace.Map.TrainingArea.StarFSTraining3.Atmosphere1:Destroy()
+			workspace.Map.TrainingArea.StarFSTraining3.Atmosphere2:Destroy()
+			AtmosphereDestroyed = true
+		end
+
+		if not FSTxt then
+			FSTxt = Players.LocalPlayer.PlayerGui.ScreenGui.MenuFrame.InfoFrame.FSTxt
+			if FSTxt then
+				FSTxt:GetPropertyChangedSignal("Text"):Connect(function()
+					local FS_Text = FSTxt.Text
+					local FS_ValueStr = FS_Text:match("Fist Strength%s*:%s*([%d%.]+%a*)")
+
+					if FS_ValueStr then
+						if not FS_Track then
+							FS_Track = {
+								startTime = tick(),
+								startValue = parseValue(FS_ValueStr),
+								lastValue = parseValue(FS_ValueStr),
+								lastTime = tick(),
+								gainPerHour = 0
+							}
+						else
+							local currentValue = parseValue(FS_ValueStr)
+							local currentTime = tick()
+							local elapsed = currentTime - FS_Track.startTime
+							local gain = currentValue - FS_Track.startValue
+							if elapsed > 0 then
+								FS_Track.gainPerHour = gain / elapsed * 3600
+							end
+							FS_Track.lastValue = currentValue
+							FS_Track.lastTime = currentTime
 						end
-						fsTrack.lastValue = currentValue
-						fsTrack.lastTime = currentTime
-					end
 
-					local function formatNumber(n)
-						local s = tostring(math.floor(n))
-						local formatted = s:reverse():gsub("(%d%d%d)", "%1."):reverse()
-						formatted = formatted:gsub("^%.", "")
-						return formatted
+						FistLabel.Text = string.format("Fist Strength/H: %s", formatNumber(FS_Track.gainPerHour))
 					end
-
-					print(string.format("Fist Strength/H: %s", formatNumber(fsTrack.gainPerHour)))
-				end
+				end)
 			end
 		end
 
@@ -463,25 +464,35 @@ spawn(function()
 						statusLabel.Text = tostring(status or "")
 						if status == "Innocent" then
 							statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+							nameLabel.TextColor3 = statusLabel.TextColor3
 						elseif status == "Protector" then
 							statusLabel.TextColor3 = Color3.fromRGB(255, 255, 150)
+							nameLabel.TextColor3 = statusLabel.TextColor3
 						elseif status == "Guardian" then
 							statusLabel.TextColor3 = Color3.fromRGB(144, 240, 144)
+							nameLabel.TextColor3 = statusLabel.TextColor3
 						elseif status == "Superhero" then
 							statusLabel.TextColor3 = Color3.fromRGB(0, 0, 255)
+							nameLabel.TextColor3 = statusLabel.TextColor3
 						elseif status == "Lawbreaker" then
 							statusLabel.TextColor3 = Color3.fromRGB(255, 140, 0)
+							nameLabel.TextColor3 = statusLabel.TextColor3
 						elseif status == "Criminal" then
 							statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+							nameLabel.TextColor3 = statusLabel.TextColor3
 						elseif status == "Supervillain" then
 							statusLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+							nameLabel.TextColor3 = statusLabel.TextColor3
+						elseif status == "Devilish" then
+							statusLabel.TextColor3 = Color3.fromRGB(125, 0, 200)
+							nameLabel.TextColor3 = statusLabel.TextColor3
 						else
 							statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+							nameLabel.TextColor3 = statusLabel.TextColor3
 						end
 					end
 					if nameLabel then
 						nameLabel.Text = v.DisplayName
-						nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 					end
 				end
 			end
