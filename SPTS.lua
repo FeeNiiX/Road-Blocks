@@ -8,6 +8,7 @@ local VirtualUser = cloneref(game:GetService("VirtualUser"))
 -- TODO: Track all other stats (i am the goat)
 
 local Weight = 4
+local RespawnTimer = 2
 
 local GC = getconnections or get_signal_cons
 if GC then
@@ -61,6 +62,8 @@ end
 
 local ScreenGui = Instance.new("ScreenGui")
 local FistLabel = Instance.new("TextLabel")
+local BodyLabel = Instance.new("TextLabel")
+local ResetButton = Instance.new("TextButton")
 
 ScreenGui.Parent = game.CoreGui
 
@@ -76,6 +79,37 @@ FistLabel.TextStrokeColor3 = Color3.fromRGB(0 ,0 ,0)
 FistLabel.Font = Enum.Font.SourceSans
 FistLabel.TextScaled = true
 FistLabel.Text = "Fist Strength/H: 0"
+
+BodyLabel.Name = "BodyLabel"
+BodyLabel.Parent = ScreenGui
+BodyLabel.Position = UDim2.new(0, 0, 0.45, 0)
+BodyLabel.Size = UDim2.new(0.1, 0, 0.05, 0)
+BodyLabel.BackgroundTransparency = 0.5
+BodyLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+BodyLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+BodyLabel.TextStrokeTransparency = 0
+BodyLabel.TextStrokeColor3 = Color3.fromRGB(0 ,0 ,0)
+BodyLabel.Font = Enum.Font.SourceSans
+BodyLabel.TextScaled = true
+BodyLabel.Text = "Body Toughness/H: 0"
+
+ResetButton.Name = "ResetButton"
+ResetButton.Parent = ScreenGui
+ResetButton.Position = UDim2.new(0, 0, 0.5, 0)
+ResetButton.Size = UDim2.new(0.1, 0, 0.05, 0)
+ResetButton.BackgroundTransparency = 0.5
+ResetButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+ResetButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ResetButton.TextStrokeTransparency = 0
+ResetButton.TextStrokeColor3 = Color3.fromRGB(0 ,0 ,0)
+ResetButton.Font = Enum.Font.SourceSans
+ResetButton.TextScaled = true
+ResetButton.Text = "Reset Values"
+
+ResetButton.MouseButton1Click:Connect(function()
+	FS_Track = nil
+	BT_Track = nil
+end)
 
 local multipliers = {K = 1e3, M = 1e6, B = 1e9, T = 1e12, Qa = 1e15, Qi = 1e18, Sx = 1e21, Sp = 1e24, Oc = 1e27, No = 1e30, Dc = 1e33}
 
@@ -167,6 +201,18 @@ local Toggle = FarmsTab:CreateToggle({
 	end,
 })
 
+local Slider = FarmsTab:CreateSlider({
+   Name = "Respawn Timer",
+   Range = {1, 60},
+   Increment = 1,
+   Suffix = "(s)",
+   CurrentValue = 2,
+   Flag = "Respawn Timer",
+   Callback = function(Value)
+   RespawnTimer = Value
+   end,
+})
+
 local Toggle = FarmsTab:CreateToggle({
 	Name = "Auto Fist Strenght",
 	CurrentValue = false,
@@ -177,7 +223,7 @@ local Toggle = FarmsTab:CreateToggle({
 })
 
 local Toggle = FarmsTab:CreateToggle({
-	Name = "Auto Body Thoughness",
+	Name = "Auto Body Toughness",
 	CurrentValue = false,
 	Flag = "AutoBT",
 	Callback = function(Value)
@@ -351,8 +397,10 @@ spawn(function()
 			AtmosphereDestroyed = true
 		end
 
-		if not FSTxt then
+		if not FSTxt and not BTTxt then
 			FSTxt = Players.LocalPlayer.PlayerGui.ScreenGui.MenuFrame.InfoFrame.FSTxt
+			BTTxt = Players.LocalPlayer.PlayerGui.ScreenGui.MenuFrame.InfoFrame.BTTxt
+
 			if FSTxt then
 				FSTxt:GetPropertyChangedSignal("Text"):Connect(function()
 					local FS_Text = FSTxt.Text
@@ -383,16 +431,47 @@ spawn(function()
 					end
 				end)
 			end
+
+			if BTTxt then
+				BTTxt:GetPropertyChangedSignal("Text"):Connect(function()
+					local BT_Text = BTTxt.Text
+					local BT_ValueStr = BT_Text:match("Body Toughness%s*:%s*([%d%.]+%a*)")
+
+					if BT_ValueStr then
+						if not BT_Track then
+							BT_Track = {
+								startTime = tick(),
+								startValue = parseValue(BT_ValueStr),
+								lastValue = parseValue(BT_ValueStr),
+								lastTime = tick(),
+								gainPerHour = 0
+							}
+						else
+							local currentValue = parseValue(BT_ValueStr)
+							local currentTime = tick()
+							local elapsed = currentTime - BT_Track.startTime
+							local gain = currentValue - BT_Track.startValue
+							if elapsed > 0 then
+								BT_Track.gainPerHour = gain / elapsed * 3600
+							end
+							BT_Track.lastValue = currentValue
+							BT_Track.lastTime = currentTime
+						end
+
+						BodyLabel.Text = string.format("Body Toughness/H: %s", formatNumber(BT_Track.gainPerHour))
+					end
+				end)
+			end
 		end
 
 		if ESP then
 			for _, v in pairs(Players:GetPlayers()) do
 				local status = v:FindFirstChild("leaderstats") and v.leaderstats:FindFirstChild("Status") and v.leaderstats.Status.Value
 				if v.Character and v.Character:FindFirstChild("Head") then
-					local statusText = v.Character.Head:FindFirstChild("BillboardGui")
+					local statusText = v.Character.Head:FindFirstChild("Wallacks")
 					if not statusText then
 						statusText = Instance.new("BillboardGui")
-						statusText.Name = "BillboardGui"
+						statusText.Name = "Wallacks"
 						statusText.Adornee = v.Character.Head
 						statusText.Size = UDim2.new(0, 100, 0, 50)
 						statusText.AlwaysOnTop = true
@@ -424,8 +503,9 @@ spawn(function()
 
 					local nameLabel = statusText:FindFirstChild("NameLabel")
 					local statusLabel = statusText:FindFirstChild("StatusLabel")
-					if statusLabel then
-						statusLabel.Text = tostring(status or "")
+					if nameLabel and statusLabel then
+						nameLabel.Text = v.DisplayName
+						statusLabel.Text = tostring(status or "nil")
 						if status == "Innocent" then
 							statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 							nameLabel.TextColor3 = statusLabel.TextColor3
@@ -455,29 +535,33 @@ spawn(function()
 							nameLabel.TextColor3 = statusLabel.TextColor3
 						end
 					end
-					if nameLabel then
-						nameLabel.Text = v.DisplayName
+				end
+			end
+		else
+			for _, v in pairs(Players:GetChildren()) do
+				if v.Character and v.Character:FindFirstChild("Head") then
+					if v.Character.Head:FindFirstChild("Wallacks") then
+						v.Character.Head.Wallacks:Destroy()
 					end
 				end
 			end
 		end
 
 		if AutoRespawn then
-			if hum.Health <= 0 then
+			if char and char.PrimaryPart and hum and hum.Health <= 0 then
 				lastDeath = (char.PrimaryPart.CFrame + Vector3.new(0, 10, 0))
-
-				ReplicatedStorage.RemoteEvent:FireServer({ "Respawn" })
 				wait(1)
-				if Players.LocalPlayer.Character and lastDeath then
-					Players.LocalPlayer.Character:SetPrimaryPartCFrame(lastDeath)
-				else
-					print('not teleporting')
-				end
 			end
 			if Players.LocalPlayer.PlayerGui.IntroGui.Enabled then
+				ReplicatedStorage.RemoteEvent:FireServer({ "Respawn" })
 				Players.LocalPlayer.PlayerGui.IntroGui.Enabled = false
 				Players.LocalPlayer.PlayerGui.ScreenGui.Enabled = true
 				game.Lighting.Blur.Enabled = false
+
+				if Players.LocalPlayer.Character and lastDeath then
+					wait(RespawnTimer)
+					Players.LocalPlayer.Character:SetPrimaryPartCFrame(lastDeath)
+				end
 			end
 		end
 
@@ -494,7 +578,7 @@ spawn(function()
 		end
 
 		if AutoPP then -- this could be better no?
-			if Players.LocalPlayer and Players.LocalPlayer.Backpack then
+			if Players.LocalPlayer and Players.LocalPlayer:FindFirstChild("Backpack") then
 				local tool = Players.LocalPlayer.Backpack:FindFirstChild("Meditate")
 			end
 			if tool and char then
