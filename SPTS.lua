@@ -77,7 +77,6 @@ FistLabel.Font = Enum.Font.SourceSans
 FistLabel.TextScaled = true
 FistLabel.Text = "Fist Strength/H: 0"
 
-local fsTrack
 local multipliers = {K = 1e3, M = 1e6, B = 1e9, T = 1e12, Qa = 1e15, Qi = 1e18, Sx = 1e21, Sp = 1e24, Oc = 1e27, No = 1e30, Dc = 1e33}
 
 local function parseValue(str)
@@ -271,41 +270,6 @@ local Toggle = MiscTab:CreateToggle({
 	end,
 })
 
---[[ local Button = MiscTab:CreateButton({
-	Name = "Start Tracking",
-	Callback = function()
-		local FSTxt = Players.LocalPlayer.PlayerGui.ScreenGui.MenuFrame.InfoFrame.FSTxt
-		FSTxt:GetPropertyChangedSignal("Text"):Connect(function()
-			local FS_Text = FSTxt.Text
-			local FS_ValueStr = FS_Text:match("Fist Strength%s*:%s*([%d%.]+%a*)")
-
-			if FS_ValueStr then
-				if not FS_Track then
-					FS_Track = {
-						startTime = tick(),
-						startValue = parseValue(FS_ValueStr),
-						lastValue = parseValue(FS_ValueStr),
-						lastTime = tick(),
-						gainPerHour = 0
-					}
-				else
-					local currentValue = parseValue(FS_ValueStr)
-					local currentTime = tick()
-					local elapsed = currentTime - FS_Track.startTime
-					local gain = currentValue - FS_Track.startValue
-					if elapsed > 0 then
-						fsTFS_Trackrack.gainPerHour = gain / elapsed * 3600
-					end
-					FS_Track.lastValue = currentValue
-					FS_Track.lastTime = currentTime
-				end
-
-				FistLabel.Text = string.format("Fist Strength/H: %s", formatNumber(FS_Track.gainPerHour))
-			end
-		end)
-	end,
-}) ]]
-
 local Toggle = MiscTab:CreateToggle({
 	Name = "ESP",
 	CurrentValue = false,
@@ -498,45 +462,44 @@ spawn(function()
 			end
 		end
 
+		if AutoRespawn then
+			if hum.Health <= 0 then
+				lastDeath = (char.PrimaryPart.CFrame + Vector3.new(0, 10, 0))
 
-		if char and char.PrimaryPart and hum and hum.Health <= 0 then
-			lastDeath = char.PrimaryPart.CFrame + Vector3.new(0, 10, 0)
+				ReplicatedStorage.RemoteEvent:FireServer({ "Respawn" })
+				wait(1)
+				if Players.LocalPlayer.Character and lastDeath then
+					Players.LocalPlayer.Character:SetPrimaryPartCFrame(lastDeath)
+				else
+					print('not teleporting')
+				end
+			end
+			if Players.LocalPlayer.PlayerGui.IntroGui.Enabled then
+				Players.LocalPlayer.PlayerGui.IntroGui.Enabled = false
+				Players.LocalPlayer.PlayerGui.ScreenGui.Enabled = true
+				game.Lighting.Blur.Enabled = false
+			end
 		end
 
 		if AutoInvis then
 			if char and char:FindFirstChild("Head") and char:FindFirstChild("Head").Transparency == 0 then
-				VirtualInputManager:SendKeyEvent(true, "T", false, game)
+				ReplicatedStorage.RemoteEvent:FireServer({ "Skill_Invisible" })
+			end
+		end
+		
+		if AutoHideAura then
+			if char and char:FindFirstChild("LeftHand") and char:FindFirstChild("LeftHand"):FindFirstChild("SPTS_FS_AURA") then
+				ReplicatedStorage.RemoteEvent:FireServer({ "ConcealRevealAura" }) -- found these at LocalPlayer script StarterPlayerScript something like this ahh
 			end
 		end
 
-		if AutoHideAura then
-			if char and char:FindFirstChild("LeftHand") and char:FindFirstChild("LeftHand"):FindFirstChild("SPTS_FS_AURA") then
-				VirtualInputManager:SendKeyEvent(true, "X", false, game)
-			end
-		end -- yes the bills are very very high, and the rent is due
-
-		if AutoPP then
+		if AutoPP then -- this could be better no?
 			if Players.LocalPlayer and Players.LocalPlayer.Backpack then
 				local tool = Players.LocalPlayer.Backpack:FindFirstChild("Meditate")
 			end
 			if tool and char then
 				tool.Parent = char
 				wait(1)
-			end
-		end
-
-		if AutoRespawn then
-			if Players.LocalPlayer.PlayerGui.IntroGui.Enabled then
-				ReplicatedStorage.RemoteEvent:FireServer({ "Respawn" })
-				Players.LocalPlayer.PlayerGui.IntroGui.Enabled = false
-				Players.LocalPlayer.PlayerGui.ScreenGui.Enabled = true
-				game.Lighting.Blur.Enabled = false
-				wait(3)
-				if char and lastDeath then
-					char:SetPrimaryPartCFrame(lastDeath)
-				else
-					print('no char or lastDeath found')
-				end
 			end
 		end
 		
