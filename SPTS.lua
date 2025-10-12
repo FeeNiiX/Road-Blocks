@@ -8,7 +8,7 @@ local VirtualUser = cloneref(game:GetService("VirtualUser"))
 -- TODO: Track all other stats (i am the goat)
 
 local Weight = 4
-local RespawnTimer = 2
+local RespawnTimer = 15
 
 local GC = getconnections or get_signal_cons
 if GC then
@@ -54,7 +54,7 @@ local function ServerHop()
 	end
 	GetServers()
 	if #Servers > 0 then
-		TeleportService:TeleportToPlaceInstance(PlaceId, Servers[math.random(1, #Servers)], Players.LocalPlayer)
+		TeleportService:TeleportToPlaceInstance(PlaceId, Servers[1], Players.LocalPlayer)
 	else
 		warn("No available servers found.")
 	end
@@ -63,6 +63,7 @@ end
 local ScreenGui = Instance.new("ScreenGui")
 local FistLabel = Instance.new("TextLabel")
 local BodyLabel = Instance.new("TextLabel")
+local PsyLabel = Instance.new("TextLabel")
 local ResetButton = Instance.new("TextButton")
 
 ScreenGui.Parent = game.CoreGui
@@ -93,9 +94,22 @@ BodyLabel.Font = Enum.Font.SourceSans
 BodyLabel.TextScaled = true
 BodyLabel.Text = "Body Toughness/H: 0"
 
+PsyLabel.Name = "PsyLabel"
+PsyLabel.Parent = ScreenGui
+PsyLabel.Position = UDim2.new(0, 0, 0.5, 0)
+PsyLabel.Size = UDim2.new(0.1, 0, 0.05, 0)
+PsyLabel.BackgroundTransparency = 0.5
+PsyLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+PsyLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+PsyLabel.TextStrokeTransparency = 0
+PsyLabel.TextStrokeColor3 = Color3.fromRGB(0 ,0 ,0)
+PsyLabel.Font = Enum.Font.SourceSans
+PsyLabel.TextScaled = true
+PsyLabel.Text = "Psychic Power/H: 0"
+
 ResetButton.Name = "ResetButton"
 ResetButton.Parent = ScreenGui
-ResetButton.Position = UDim2.new(0, 0, 0.5, 0)
+ResetButton.Position = UDim2.new(0, 0, 0.55, 0)
 ResetButton.Size = UDim2.new(0.1, 0, 0.05, 0)
 ResetButton.BackgroundTransparency = 0.5
 ResetButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
@@ -109,6 +123,7 @@ ResetButton.Text = "Reset Values"
 ResetButton.MouseButton1Click:Connect(function()
 	FS_Track = nil
 	BT_Track = nil
+	PP_Track = nil
 end)
 
 local multipliers = {K = 1e3, M = 1e6, B = 1e9, T = 1e12, Qa = 1e15, Qi = 1e18, Sx = 1e21, Sp = 1e24, Oc = 1e27, No = 1e30, Dc = 1e33}
@@ -206,7 +221,7 @@ local Slider = FarmsTab:CreateSlider({
    Range = {1, 60},
    Increment = 1,
    Suffix = "(s)",
-   CurrentValue = 2,
+   CurrentValue = 15,
    Flag = "Respawn Timer",
    Callback = function(Value)
    RespawnTimer = Value
@@ -264,6 +279,60 @@ local Toggle = FarmsTab:CreateToggle({
 	Flag = "AutoPP",
 	Callback = function(Value)
 	AutoPP = Value
+	end,
+})
+
+local TeleportsTab = Window:CreateTab("Teleports", 4483362458)
+local TeleportsSection = TeleportsTab:CreateSection("Teleports Section")
+
+local Dropdown = TeleportsTab:CreateDropdown({
+	Name = "Teleports",
+	Options = TrainingAreasStrings,
+	CurrentOption = "",
+	MultipleOptions = false,
+	Flag = "Teleports",
+	Callback = function(Options)
+		for _, part in ipairs(TrainingAreas) do
+			if part.Name == Options[1] then
+				Players.LocalPlayer.Character:SetPrimaryPartCFrame(part.CFrame + Vector3.new(0, 10, 0))
+				break
+			end
+		end
+	end,
+})
+
+local Button = TeleportsTab:CreateButton({
+	Name = "Blue Star",
+	Callback = function()
+	Players.LocalPlayer.Character:SetPrimaryPartCFrame(workspace.Map.Training_Collisions.FistStrength.StarFSTraining1.CFrame + Vector3.new(0, 10, 0))
+	end,
+})
+
+local Button = TeleportsTab:CreateButton({
+	Name = "Green Star",
+	Callback = function()
+	Players.LocalPlayer.Character:SetPrimaryPartCFrame(workspace.Map.Training_Collisions.FistStrength.StarFSTraining2.CFrame + Vector3.new(0, 10, 0))
+	end,
+})
+
+local Button = TeleportsTab:CreateButton({
+	Name = "Red Star",
+	Callback = function()
+	Players.LocalPlayer.Character:SetPrimaryPartCFrame(workspace.Map.Training_Collisions.FistStrength.StarFSTraining3.CFrame + Vector3.new(0, 10, 0))
+	end,
+})
+
+local Button = TeleportsTab:CreateButton({
+	Name = "Psychic Island",
+	Callback = function()
+	Players.LocalPlayer.Character:SetPrimaryPartCFrame(workspace.Map.Training_Collisions.PsychicPower.PPTrainingPart4.CFrame + Vector3.new(0, 10, 0))
+	end,
+})
+
+local Button = TeleportsTab:CreateButton({
+	Name = "10T Pool",
+	Callback = function()
+	Players.LocalPlayer.Character:SetPrimaryPartCFrame(workspace.Map.Training_Collisions.BodyToughness.LavaPart2.CFrame)
 	end,
 })
 
@@ -325,60 +394,6 @@ local Toggle = MiscTab:CreateToggle({
 	end,
 })
 
-local TeleportsTab = Window:CreateTab("Teleports", 4483362458)
-local TeleportsSection = TeleportsTab:CreateSection("Teleports Section")
-
-local Dropdown = TeleportsTab:CreateDropdown({
-	Name = "Teleports",
-	Options = TrainingAreasStrings,
-	CurrentOption = "",
-	MultipleOptions = false,
-	Flag = "Teleports",
-	Callback = function(Options)
-		for _, part in ipairs(TrainingAreas) do
-			if part.Name == Options[1] then
-				Players.LocalPlayer.Character:SetPrimaryPartCFrame(part.CFrame + Vector3.new(0, 10, 0))
-				break
-			end
-		end
-	end,
-})
-
-local Button = TeleportsTab:CreateButton({
-	Name = "Blue Star",
-	Callback = function()
-	Players.LocalPlayer.Character:SetPrimaryPartCFrame(workspace.Map.Training_Collisions.FistStrength.StarFSTraining1.CFrame + Vector3.new(0, 10, 0))
-	end,
-})
-
-local Button = TeleportsTab:CreateButton({
-	Name = "Green Star",
-	Callback = function()
-	Players.LocalPlayer.Character:SetPrimaryPartCFrame(workspace.Map.Training_Collisions.FistStrength.StarFSTraining2.CFrame + Vector3.new(0, 10, 0))
-	end,
-})
-
-local Button = TeleportsTab:CreateButton({
-	Name = "Red Star",
-	Callback = function()
-	Players.LocalPlayer.Character:SetPrimaryPartCFrame(workspace.Map.Training_Collisions.FistStrength.StarFSTraining3.CFrame + Vector3.new(0, 10, 0))
-	end,
-})
-
-local Button = TeleportsTab:CreateButton({
-	Name = "Psychic Island",
-	Callback = function()
-	Players.LocalPlayer.Character:SetPrimaryPartCFrame(workspace.Map.Training_Collisions.PsychicPower.PPTrainingPart4.CFrame + Vector3.new(0, 10, 0))
-	end,
-})
-
-local Button = TeleportsTab:CreateButton({
-	Name = "10T Pool",
-	Callback = function()
-	Players.LocalPlayer.Character:SetPrimaryPartCFrame(workspace.Map.Training_Collisions.BodyToughness.LavaPart2.CFrame)
-	end,
-})
-
 local tickrate = 1 / 30
 spawn(function()
 	while wait(tickrate) do
@@ -397,9 +412,10 @@ spawn(function()
 			AtmosphereDestroyed = true
 		end
 
-		if not FSTxt and not BTTxt then
+		if not FSTxt and not BTTxt and not PPTxt then
 			FSTxt = Players.LocalPlayer.PlayerGui.ScreenGui.MenuFrame.InfoFrame.FSTxt
 			BTTxt = Players.LocalPlayer.PlayerGui.ScreenGui.MenuFrame.InfoFrame.BTTxt
+			PPTxt = Players.LocalPlayer.PlayerGui.ScreenGui.MenuFrame.InfoFrame.PPTxt
 
 			if FSTxt then
 				FSTxt:GetPropertyChangedSignal("Text"):Connect(function()
@@ -459,6 +475,37 @@ spawn(function()
 						end
 
 						BodyLabel.Text = string.format("Body Toughness/H: %s", formatNumber(BT_Track.gainPerHour))
+					end
+				end)
+			end
+
+			if PPTxt then
+				PPTxt:GetPropertyChangedSignal("Text"):Connect(function()
+					local PP_Text = PPTxt.Text
+					local PP_ValueStr = PP_Text:match("Psychic Power%s*:%s*([%d%.]+%a*)")
+
+					if PP_ValueStr then
+						if not PP_Track then
+							PP_Track = {
+								startTime = tick(),
+								startValue = parseValue(PP_ValueStr),
+								lastValue = parseValue(PP_ValueStr),
+								lastTime = tick(),
+								gainPerHour = 0
+							}
+						else
+							local currentValue = parseValue(PP_ValueStr)
+							local currentTime = tick()
+							local elapsed = currentTime - PP_Track.startTime
+							local gain = currentValue - PP_Track.startValue
+							if elapsed > 0 then
+								PP_Track.gainPerHour = gain / elapsed * 3600
+							end
+							PP_Track.lastValue = currentValue
+							PP_Track.lastTime = currentTime
+						end
+
+						PsyLabel.Text = string.format("Psychic Power/H: %s", formatNumber(PP_Track.gainPerHour))
 					end
 				end)
 			end
@@ -549,8 +596,9 @@ spawn(function()
 
 		if AutoRespawn then
 			if char and char.PrimaryPart and hum and hum.Health <= 0 then
-				lastDeath = (char.PrimaryPart.CFrame + Vector3.new(0, 10, 0))
-				wait(1)
+				if not lastDeath then
+					lastDeath = (char.PrimaryPart.CFrame + Vector3.new(0, 10, 0))
+				end
 			end
 			if Players.LocalPlayer.PlayerGui.IntroGui.Enabled then
 				ReplicatedStorage.RemoteEvent:FireServer({ "Respawn" })
@@ -561,6 +609,7 @@ spawn(function()
 				if Players.LocalPlayer.Character and lastDeath then
 					wait(RespawnTimer)
 					Players.LocalPlayer.Character:SetPrimaryPartCFrame(lastDeath)
+					lastDeath = nil
 				end
 			end
 		end
@@ -581,13 +630,16 @@ spawn(function()
 			if Players.LocalPlayer and Players.LocalPlayer:FindFirstChild("Backpack") then
 				local tool = Players.LocalPlayer.Backpack:FindFirstChild("Meditate")
 			end
-			if tool and char then
+			if tool and char and tool.Parent ~= char then
 				tool.Parent = char
-				wait(1)
+				print("635")
 			end
 		end
 		
 		if char then
+			if not Players.LocalPlayer.Character:FindFirstChild("SPTS_Weight") and AutoMS or AutoJF or AutoMSJF then
+				ReplicatedStorage.RemoteEvent:FireServer({[1] = "EquipWeight_Request", [2] = Weight})
+			end
 			if AutoFS then
 				ReplicatedStorage.RemoteEvent:FireServer({"Add_FS_Request"})
 			end
@@ -595,15 +647,12 @@ spawn(function()
 				ReplicatedStorage.RemoteEvent:FireServer({"+BT1"})
 			end
 			if AutoMS then
-				ReplicatedStorage.RemoteEvent:FireServer({[1] = "EquipWeight_Request", [2] = Weight})
 				ReplicatedStorage.RemoteEvent:FireServer({"Add_MS_Request"})
 			end
 			if AutoJF then
-				ReplicatedStorage.RemoteEvent:FireServer({[1] = "EquipWeight_Request", [2] = Weight})
 				ReplicatedStorage.RemoteEvent:FireServer({"Add_JF_Request"})
 			end
 			if AutoMSJF then
-				ReplicatedStorage.RemoteEvent:FireServer({[1] = "EquipWeight_Request", [2] = Weight})
 				ReplicatedStorage.RemoteEvent:FireServer({"Add_MS_Request"})
 				ReplicatedStorage.RemoteEvent:FireServer({"Add_JF_Request"})
 			end
