@@ -3,13 +3,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
-local VirtualUser = cloneref(game:GetService("VirtualUser"))
-
--- TODO: Track all other stats (i am the goat)
 
 local Weight = 4
-local RespawnTimer = 15
+local RespawnTimer = 30
 
+local VirtualUser = cloneref(game:GetService("VirtualUser"))
 local GC = getconnections or get_signal_cons
 if GC then
 	for i,v in pairs(GC(Players.LocalPlayer.Idled)) do
@@ -150,10 +148,10 @@ end
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-	Name = "Rayfield Example Window",
+	Name = "https://github.com/FeeNiiX/Road-Blocks",
 	Icon = 0,
-	LoadingTitle = "Rayfield Interface Suite",
-	LoadingSubtitle = "by Sirius",
+	LoadingTitle = "SPTS.lua",
+	LoadingSubtitle = "by FeNiIX",
 	ShowText = "Rayfield",
 	Theme = "Default",
 
@@ -165,7 +163,7 @@ local Window = Rayfield:CreateWindow({
 	ConfigurationSaving = {
 		Enabled = true,
 		FolderName = nil,
-		FileName = "Big Hub"
+		FileName = "SPTS Hub"
 	},
 
 	Discord = {
@@ -221,7 +219,7 @@ local Slider = FarmsTab:CreateSlider({
    Range = {1, 60},
    Increment = 1,
    Suffix = "(s)",
-   CurrentValue = 15,
+   CurrentValue = 30,
    Flag = "Respawn Timer",
    Callback = function(Value)
    RespawnTimer = Value
@@ -565,6 +563,9 @@ spawn(function()
 						elseif status == "Superhero" then
 							statusLabel.TextColor3 = Color3.fromRGB(0, 0, 255)
 							nameLabel.TextColor3 = statusLabel.TextColor3
+						elseif status == "Punisher" then
+							statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+							nameLabel.TextColor3 = statusLabel.TextColor3
 						elseif status == "Lawbreaker" then
 							statusLabel.TextColor3 = Color3.fromRGB(255, 140, 0)
 							nameLabel.TextColor3 = statusLabel.TextColor3
@@ -601,13 +602,14 @@ spawn(function()
 				end
 			end
 			if Players.LocalPlayer.PlayerGui.IntroGui.Enabled then
+				wait(RespawnTimer)
 				ReplicatedStorage.RemoteEvent:FireServer({ "Respawn" })
 				Players.LocalPlayer.PlayerGui.IntroGui.Enabled = false
 				Players.LocalPlayer.PlayerGui.ScreenGui.Enabled = true
 				game.Lighting.Blur.Enabled = false
 
 				if Players.LocalPlayer.Character and lastDeath then
-					wait(RespawnTimer)
+					wait(1)
 					Players.LocalPlayer.Character:SetPrimaryPartCFrame(lastDeath)
 					lastDeath = nil
 				end
@@ -626,13 +628,12 @@ spawn(function()
 			end
 		end
 
-		if AutoPP then -- this could be better no?
+		if AutoPP then
 			if Players.LocalPlayer and Players.LocalPlayer:FindFirstChild("Backpack") then
 				local tool = Players.LocalPlayer.Backpack:FindFirstChild("Meditate")
 			end
 			if tool and char and tool.Parent ~= char then
 				tool.Parent = char
-				print("635")
 			end
 		end
 		
